@@ -20,5 +20,6 @@
       "@shared/*": ["./shared/*"]
     },
     "noImplicitAny": false,
+    "suppressImplicitAnyIndexErrors": true
   }
 }

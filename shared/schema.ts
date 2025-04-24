@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { Types } from 'mongoose';
 
 // Re-export all Mongoose models
 export * from './models/user';
@@ -9,6 +10,9 @@ export * from './models/payment';
 export * from './models/branch';
 export * from './models/settings';
 export * from './models/activity'; // Commented out because 'activity.ts' is not a module
+
+// Helper to allow both string and ObjectId types
+const objectIdSchema = z.union([z.string(), z.instanceof(Types.ObjectId)]);
 
 // Create Zod validation schemas for input data
 
@@ -30,12 +34,12 @@ export const studentSchema = z.object({
   email: z.string().email(),
   phone: z.string().min(10),
   idNumber: z.string(),
-  courseId: z.string(),
+  courseId: objectIdSchema, // Allow string or ObjectId
   status: z.enum(['active', 'completed', 'dropped']).default('active'),
   balance: z.number().default(0),
   totalPaid: z.number().default(0),
   courseFee: z.number(),
-  branch: z.string().optional()
+  branch: objectIdSchema.optional() // Allow string or ObjectId
 });
 
 // Course validation schema
@@ -51,14 +55,14 @@ export const courseSchema = z.object({
 
 // Payment validation schema
 export const paymentSchema = z.object({
-  studentId: z.string(),
+  studentId: objectIdSchema, // Allow string or ObjectId
   amount: z.number().positive(),
   paymentMethod: z.enum(['mpesa', 'cash', 'bank', 'other']),
   transactionId: z.string().optional(),
   lessonCovered: z.number().optional(),
   notes: z.string().optional(),
-  createdBy: z.string().optional(), // Defaults to current user in storage implementation
-  branch: z.string().optional()
+  createdBy: objectIdSchema.optional(), // Allow string or ObjectId
+  branch: objectIdSchema.optional() // Allow string or ObjectId
 });
 
 // Branch validation schema
@@ -68,14 +72,14 @@ export const branchSchema = z.object({
   address: z.string(),
   contactPhone: z.string().min(10),
   contactEmail: z.string().email().optional(),
-  manager: z.string().optional(),
+  manager: objectIdSchema.optional(), // Allows string or ObjectId
   active: z.boolean().default(true)
 });
 
 // Instructor validation schema
 export const instructorSchema = z.object({
-  userId: z.string(),
+  userId: objectIdSchema, // Allow string or ObjectId
   specialization: z.array(z.string()),
-  branch: z.string().optional(),
+  branch: objectIdSchema.optional(), // Allow string or ObjectId
   active: z.boolean().default(true)
 });

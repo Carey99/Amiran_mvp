@@ -459,13 +459,13 @@ app.post("/api/payments", async (req, res) => {
   app.post("/api/branches", async (req, res) => {
     try {
       const branchData = branchSchema.parse(req.body);
-      
+
       // Convert string IDs to ObjectIds
-      if (branchData.manager) {
-        branchData.manager = new Types.ObjectId(branchData.manager);
+      if (branchData.manager && typeof branchData.manager === "string") {
+        branchData.manager = new Types.ObjectId(branchData.manager); // Ensure it's an ObjectId
       }
-      
-      const branch = await storage.createBranch(branchData);
+
+      const branch = await storage.createBranch(branchData); // Pass the validated and converted data
       res.status(201).json(branch);
     } catch (error) {
       if (error instanceof ZodError) {

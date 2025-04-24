@@ -8,20 +8,24 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-export default defineConfig({
-  plugins: [
+// Prepare plugins array with conditional Replit plugin inclusion
+const getPlugins = async () => {
+  const plugins = [
     react(),
     runtimeErrorOverlay(),
     themePlugin(),
-    ...(process.env.NODE_ENV !== "production" &&
-    process.env.REPL_ID !== undefined
-      ? [
-          await import("@replit/vite-plugin-cartographer").then((m) =>
-            m.cartographer(),
-          ),
-        ]
-      : []),
-  ],
+  ];
+
+  if (process.env.NODE_ENV !== "production" && process.env.REPL_ID !== undefined) {
+    const { cartographer } = await import("@replit/vite-plugin-cartographer");
+    plugins.push(cartographer());
+  }
+
+  return plugins;
+};
+
+export default defineConfig(async () => ({
+  plugins: await getPlugins(),
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "client", "src"),
@@ -34,4 +38,4 @@ export default defineConfig({
     outDir: path.resolve(__dirname, "dist/public"),
     emptyOutDir: true,
   },
-});
+}));

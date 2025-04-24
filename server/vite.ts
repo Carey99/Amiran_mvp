@@ -26,7 +26,7 @@ export async function setupVite(app: Express, server: Server) {
   const serverOptions = {
     middlewareMode: true,
     hmr: { server },
-    allowedHosts: ["localhost", "your-domain.com"], // Replace with your allowed hosts
+    allowedHosts: ["localhost", "amiran-mvp.vercel.app"], // Replace with your allowed hosts
   };
 
   const vite = await createViteServer({

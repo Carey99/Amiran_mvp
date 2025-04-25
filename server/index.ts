@@ -72,7 +72,7 @@ app.use((req, res, next) => {
     // It is the only port that is not firewalled.
     const port = process.env.PORT || 5000;
     server.listen({
-      port,
+      port: Number(port),
       host: "0.0.0.0",
       reusePort: true,
     }, () => {

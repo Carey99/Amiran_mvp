@@ -1,4 +1,3 @@
-
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import themePlugin from "@replit/vite-plugin-shadcn-theme-json";
@@ -9,15 +8,13 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Prepare plugins array with conditional Replit plugin inclusion
 const getPlugins = async () => {
-  const plugins = [
-    react(),
-    runtimeErrorOverlay(),
-    themePlugin(),
-  ];
+  const plugins = [react(), runtimeErrorOverlay(), themePlugin()];
 
-  if (process.env.NODE_ENV !== "production" && process.env.REPL_ID !== undefined) {
+  if (
+    process.env.NODE_ENV !== "production" &&
+    process.env.REPL_ID !== undefined
+  ) {
     const { cartographer } = await import("@replit/vite-plugin-cartographer");
     plugins.push(cartographer());
   }
@@ -31,15 +28,16 @@ export default defineConfig(async () => ({
     host: true,
     port: 5000,
     strictPort: true,
+    allowedHosts: [".replit.dev"], // ✅ added to fix host block issue
     hmr: {
       clientPort: 443,
-      port: 5000
-    }
+      port: 5000,
+    },
   },
   preview: {
     host: true,
     port: 5000,
-    strictPort: true
+    strictPort: true,
   },
   resolve: {
     alias: {

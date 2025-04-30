@@ -28,10 +28,9 @@ export default defineConfig(async () => ({
     host: true,
     port: 5000,
     strictPort: true,
-    allowedHosts: [".replit.dev"], // ✅ added to fix host block issue
     hmr: {
       clientPort: 443,
-      port: 5000,
+      host: true
     },
   },
   preview: {

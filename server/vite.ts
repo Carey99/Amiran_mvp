@@ -27,7 +27,13 @@ export async function setupVite(app: Express, server: Server) {
     middlewareMode: true,
     hmr: { server },
     host: true,
-    allowedHosts: "all",
+    strictPort: true,
+    server: {
+      hmr: {
+        clientPort: 443,
+        host: true
+      }
+    }
   };
 
   const vite = await createViteServer({

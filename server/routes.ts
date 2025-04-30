@@ -14,10 +14,10 @@ import { initiateSTKPush } from './services/mpesaService';
 export async function registerRoutes(app: Express): Promise<Server> {
   // Connect to MongoDB Atlas
   await connectToMongoDB();
-  
+
   // Seed the database with initial data including admin user and courses
   await seedInitialData();
-  
+
   // API routes
   app.get("/api/db-status", async (req, res) => {
     try {
@@ -31,10 +31,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Error checking database status", error: (error as Error).message });
     }
   });
-  
+
   // Public routes
   app.post("/api/students/register", studentController.registerStudent);
-  
+
   // Student controller routes
   app.get("/api/students", studentController.getAllStudents);
   app.get("/api/students/active", studentController.getActiveStudents);
@@ -47,21 +47,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/login", async (req, res) => {
     try {
       const { username, password } = req.body;
-      
+
       if (!username || !password) {
         return res.status(400).json({ message: "Username and password are required" });
       }
-      
+
       const user = await storage.getUserByUsername(username);
-      
+
       if (!user) {
         return res.status(401).json({ message: "Invalid username or password" });
       }
-      
+
       // For the admin user created with the seed, we need special handling
       // since it might have been created with direct password assignment
       let isPasswordValid = false;
-      
+
       if (user.password.includes('.')) {
         // Password is in hashed format with salt
         isPasswordValid = await comparePasswords(password, user.password);
@@ -69,11 +69,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Direct comparison for development only
         isPasswordValid = password === user.password;
       }
-      
+
       if (!isPasswordValid) {
         return res.status(401).json({ message: "Invalid username or password" });
       }
-      
+
       // Session setup would go here in a real application
       res.json({
         id: user.id,
@@ -82,25 +82,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         firstName: user.firstName,
         lastName: user.lastName
       });
-      
+
     } catch (error) {
       console.error("Login error:", error);
       res.status(500).json({ message: "Error during login", error: (error as Error).message });
     }
   });
-  
+
   // Session validity check endpoint
   app.get("/api/auth/check-session", async (req, res) => {
     try {
       // This is a simple check - in a real application, you would validate
       // a session token or JWT. For now, we'll just return success.
       // For demonstration purposes only.
-      
+
       // In a production environment, you would:
       // 1. Extract session token/JWT from headers
       // 2. Verify the token validity
       // 3. Check user permissions if needed
-      
+
       res.status(200).json({ valid: true });
     } catch (error) {
       console.error("Session check error:", error);
@@ -115,22 +115,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/signup", async (req, res) => {
     try {
       const userData = userSchema.parse(req.body);
-      
+
       // Check if username already exists
       const existingUser = await storage.getUserByUsername(userData.username);
       if (existingUser) {
         return res.status(400).json({ message: "Username already exists" });
       }
-      
+
       // Hash the password
       const hashedPassword = await hashPassword(userData.password);
-      
+
       // Create the user with hashed password
       const user = await storage.createUser({
         ...userData,
         password: hashedPassword
       });
-      
+
       // Return user without sensitive data
       res.status(201).json({
         id: user.id,
@@ -164,12 +164,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/users", async (req, res) => {
     try {
       const userData = userSchema.parse(req.body);
-      
+
       // Hash the password if provided
       if (userData.password) {
         userData.password = await hashPassword(userData.password);
       }
-      
+
       const user = await storage.createUser(userData);
       res.status(201).json(user);
     } catch (error) {
@@ -214,7 +214,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/students", async (req, res) => {
     try {
       const studentData = studentSchema.parse(req.body);
-      
+
       // Convert string IDs to ObjectIds
       if (studentData.courseId) {
         // Create a new object with the courseId as ObjectId
@@ -223,10 +223,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           courseId: new Types.ObjectId(studentData.courseId as string),
           branch: studentData.branch ? new Types.ObjectId(studentData.branch as string) : undefined
         });
-        
+
         // Log success for debugging
         console.log(`Student created via API: ${studentData.firstName} ${studentData.lastName}`);
-        
+
         res.status(201).json(student);
       } else {
         return res.status(400).json({ message: "Course ID is required" });
@@ -243,7 +243,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/students/:id", async (req, res) => {
     try {
       const studentData = req.body;
-      
+
       // Convert string IDs to ObjectIds if present
       if (studentData.courseId) {
         studentData.courseId = new Types.ObjectId(studentData.courseId);
@@ -251,7 +251,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (studentData.branch) {
         studentData.branch = new Types.ObjectId(studentData.branch);
       }
-      
+
       const updatedStudent = await storage.updateStudent(req.params.id, studentData);
       if (!updatedStudent) {
         return res.status(404).json({ message: "Student not found" });
@@ -288,9 +288,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Extract user and instructor fields
       const { user, ...instructorFields } = req.body;
-  
+
       let userId: Types.ObjectId;
-  
+
       if (user) {
         // Create a new user
         const userData = userSchema.parse(user);
@@ -301,7 +301,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         return res.status(400).json({ message: "User information is required" });
       }
-  
+
       // Prepare adjusted instructor data
       const instructorData = {
         ...instructorFields,
@@ -311,19 +311,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
             ? new Types.ObjectId(instructorFields.branch) // Convert string to ObjectId
             : instructorFields.branch,
       };
-  
+
       // Validate instructor data and pass the final ObjectId values
       // @ts-ignore
       const validatedData: Partial<IInstructor> = instructorSchema.parse(instructorData);
-  
+
       // Ensure TypeScript compliance for `userId` and `branch`
       validatedData.userId = new Types.ObjectId(validatedData.userId as string);
       if (validatedData.branch)
         validatedData.branch = new Types.ObjectId(validatedData.branch as string);
-  
+
       // Create the instructor in the database
       const instructor = await storage.createInstructor(validatedData);
-  
+
       // Success response
       res.status(201).json(instructor);
     } catch (error) {
@@ -380,58 +380,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-      // Log the extracted fields for debugging
-      console.log('Extracted Fields:', { phoneNumber, amount, accountReference, transactionDesc });
-
-      // Check for missing fields
-      if (!phoneNumber || !amount || !accountReference || !transactionDesc) {
-        console.error('Missing required fields:', { phoneNumber, amount, accountReference, transactionDesc });
-        return res.status(400).json({ message: 'Missing required fields' });
-      }
-
-      // Proceed with STK Push logic
-      const result = await initiateSTKPush({ phoneNumber, amount, accountReference, transactionDesc });
-
-      if (result.success) {
-        return res.status(200).json(result);
-      } else {
-        return res.status(500).json({ message: 'STK Push failed', error: result.error });
-      }
-    } catch (error) {
-      console.error('Error in STK Push route:', error);
-      res.status(500).json({ message: 'Internal server error', error: (error as Error).message });
-    }
-  });
-
-  // Payment routes
-  app.get("/api/payments/student/:studentId", async (req, res) => {
-    try {
-      const payments = await storage.getPaymentsByStudent(req.params.studentId);
-      res.json(payments);
-    } catch (error) {
-      res.status(500).json({ message: "Error fetching payments", error: (error as Error).message });
-    }
-  });
-
-  // M-Pesa callback route
-app.post("/api/payments/callback", async (req, res) => {
-  try {
-    const { Body: { stkCallback: { MerchantRequestID, CheckoutRequestID, ResultCode, ResultDesc } } } = req.body;
-    
-    // Handle the callback - you can update the payment status here
-    console.log("M-Pesa callback received:", { MerchantRequestID, CheckoutRequestID, ResultCode, ResultDesc });
-    
-    res.json({ success: true });
-  } catch (error) {
-    console.error("M-Pesa callback error:", error);
-    res.status(500).json({ success: false, error: (error as Error).message });
-  }
-});
-
-app.post("/api/payments", async (req, res) => {
+  app.post("/api/payments", async (req, res) => {
     try {
       const paymentData = paymentSchema.parse(req.body);
-      
+
       // Convert string IDs to ObjectIds
       if (paymentData.studentId) {
         paymentData.studentId = new Types.ObjectId(paymentData.studentId);
@@ -502,6 +454,19 @@ app.post("/api/payments", async (req, res) => {
       res.status(500).json({ message: "Error fetching recent activities", error: (error as Error).message });
     }
   });
+
+    app.get('/api/payments/:paymentId/receipt', async (req, res) => {
+    try {
+      const receipt = await storage.generateReceipt(req.params.paymentId);
+      if (!receipt) {
+        return res.status(404).json({ message: "Receipt not found" });
+      }
+      res.json(receipt);
+    } catch (error) {
+      res.status(500).json({ message: "Error generating receipt", error: (error as Error).message });
+    }
+  });
+
 
   const httpServer = createServer(app);
   return httpServer;

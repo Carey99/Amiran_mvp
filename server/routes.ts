@@ -371,6 +371,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   // Payment routes
+  app.get('/api/payments', async (req, res) => { //Added this route
+    try {
+      const payments = await storage.getAllPayments();
+      res.json(payments);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching payments", error: (error as Error).message });
+    }
+  });
+
   app.get('/api/payments/student/:studentId', async (req, res) => {
     try {
       const payments = await storage.getPaymentsByStudent(req.params.studentId);

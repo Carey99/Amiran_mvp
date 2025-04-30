@@ -4,7 +4,10 @@ import { storage } from '../storage';
 
 export const getPayments = async (req: Request, res: Response) => {
   try {
-    const payments = await storage.getPaymentsByStudent(req.params.studentId);
+    const studentId = req.params.studentId;
+    const payments = studentId 
+      ? await storage.getPaymentsByStudent(studentId)
+      : await storage.getAllPayments();
     res.json(payments);
   } catch (error) {
     res.status(500).json({ message: "Error fetching payments", error: (error as Error).message });

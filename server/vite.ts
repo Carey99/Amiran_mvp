@@ -26,7 +26,7 @@ export async function setupVite(app: Express, server: Server) {
   const serverOptions = {
     middlewareMode: true,
     hmr: { server },
-    allowedHosts: ["localhost", "amiran-mvp.vercel.app"], // Replace with your allowed hosts
+    allowedHosts: ["localhost", "amiran-mvp.vercel.app", "*.replit.dev"], // Allow all Replit dev domains
   };
 
   const vite = await createViteServer({

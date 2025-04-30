@@ -1,3 +1,4 @@
+
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import themePlugin from "@replit/vite-plugin-shadcn-theme-json";
@@ -26,6 +27,14 @@ const getPlugins = async () => {
 
 export default defineConfig(async () => ({
   plugins: await getPlugins(),
+  server: {
+    host: '0.0.0.0',
+    port: 5000,
+    hmr: {
+      clientPort: 443,
+      host: '0.0.0.0',
+    }
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "client", "src"),

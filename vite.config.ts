@@ -28,12 +28,18 @@ const getPlugins = async () => {
 export default defineConfig(async () => ({
   plugins: await getPlugins(),
   server: {
-    host: '0.0.0.0',
+    host: true,
     port: 5000,
+    strictPort: true,
     hmr: {
       clientPort: 443,
-      host: '0.0.0.0',
+      port: 5000
     }
+  },
+  preview: {
+    host: true,
+    port: 5000,
+    strictPort: true
   },
   resolve: {
     alias: {

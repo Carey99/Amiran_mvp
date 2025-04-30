@@ -120,15 +120,38 @@ export default function StudentLessons() {
       <head>
         <title>Driving Lesson Receipt</title>
         <style>
-          body { font-family: Arial, sans-serif; padding: 20px; }
-          .receipt { border: 1px solid #ccc; padding: 20px; max-width: 350px; margin: 0 auto; }
-          .header { text-align: center; margin-bottom: 20px; }
-          .logo { font-size: 24px; font-weight: bold; margin-bottom: 5px; }
-          .title { font-size: 18px; margin-bottom: 20px; }
-          .info-row { display: flex; justify-content: space-between; margin-bottom: 10px; }
-          .label { font-weight: bold; }
-          .footer { margin-top: 30px; text-align: center; font-size: 12px; }
-          .print-btn { display: block; margin: 20px auto; padding: 10px 20px; }
+          @page { margin: 0; }
+          body { 
+            font-family: monospace;
+            width: 80mm;
+            margin: 0;
+            padding: 10px;
+            font-size: 12px;
+          }
+          .receipt { text-align: center; }
+          .header { 
+            border-bottom: 1px dashed #000;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+          }
+          .logo { 
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 5px;
+          }
+          .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 5px 0;
+            font-size: 12px;
+          }
+          .footer {
+            margin-top: 15px;
+            border-top: 1px dashed #000;
+            padding-top: 10px;
+            font-size: 10px;
+            text-align: center;
+          }
           @media print {
             .print-btn { display: none; }
           }

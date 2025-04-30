@@ -71,13 +71,12 @@ app.use((req, res, next) => {
     // this serves both the API and the client.
     // It is the only port that is not firewalled.
     const port = process.env.PORT || 5000;
-    const host = process.env.NODE_ENV === 'production' ? '0.0.0.0' : '';
     server.listen({
       port: Number(port),
-      host,
+      host: '0.0.0.0',
       reusePort: true,
     }, () => {
-      log(`serving on ${host || 'localhost'}:${port}`);
+      log(`serving on port ${port}`);
     });
   } catch (error) {
     log(`Error starting server: ${error}`);

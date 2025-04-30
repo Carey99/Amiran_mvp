@@ -15,6 +15,10 @@ export const connectToMongoDB = async (): Promise<void> => {
       maxPoolSize: 10, // Maintain up to 10 socket connections
       connectTimeoutMS: 10000, // Give up initial connection after 10 seconds
       socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
+      retryWrites: true,
+      w: 'majority',
+      ssl: true,
+      tlsAllowInvalidCertificates: true
     });
     
     // Set up event handlers only once to avoid duplicates

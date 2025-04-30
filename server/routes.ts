@@ -370,14 +370,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Error creating course", error: (error as Error).message });
     }
   });
-  //stkpush route
-  app.post('/api/payments/stkpush', async (req, res) => {
+  // Payment routes
+  app.get('/api/payments/student/:studentId', async (req, res) => {
     try {
-      // Log the raw request body for debugging
-      console.log('Raw Request Body:', req.body);
-
-      // Extract and validate the required fields
-      const { phoneNumber, amount, accountReference, transactionDesc } = req.body;
+      const payments = await storage.getPaymentsByStudent(req.params.studentId);
+      res.json(payments);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching payments", error: (error as Error).message });
+    }
+  });
 
       // Log the extracted fields for debugging
       console.log('Extracted Fields:', { phoneNumber, amount, accountReference, transactionDesc });

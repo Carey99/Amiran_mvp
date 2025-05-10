@@ -80,10 +80,12 @@ export function Sidebar({ user }: SidebarProps) {
                 <BookOpen className="h-4 w-4 mr-3" />
                 <span>Courses</span>
             </Link>
+            {/* Branches link commented out
             <Link href="/admin/branches" className={`flex items-center px-3 py-2 text-sm rounded-md ${isActive('/admin/branches') || isActive('/branches') ? 'bg-gray-800 text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white'}`}>
                 <Store className="h-4 w-4 mr-3" />
                 <span>Branches</span>
             </Link>
+            */}
           </div>
           
           <div className="mt-8">
@@ -95,10 +97,12 @@ export function Sidebar({ user }: SidebarProps) {
                   <Settings className="h-4 w-4 mr-3" />
                   <span>Settings</span>
               </Link>
+              {/* Reports link commented out
               <Link href="/admin/reports" className={`flex items-center px-3 py-2 text-sm rounded-md ${isActive('/admin/reports') || isActive('/reports') ? 'bg-gray-800 text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white'}`}>
                   <BarChart className="h-4 w-4 mr-3" />
                   <span>Reports</span>
               </Link>
+              */}
             </div>
           </div>
         </nav>

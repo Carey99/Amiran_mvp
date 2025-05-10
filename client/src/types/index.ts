@@ -24,6 +24,7 @@ export interface Student {
   totalPaid: number;
   courseFee: number;
   branch?: string;
+  photoUrl?: string; // <-- Add this line
   createdAt: string;
 }
 
@@ -57,7 +58,17 @@ export interface Course {
   id: string;
   name: string;
   description: string;
-  type: 'manual' | 'automatic' | 'both';
+  type:
+    | 'Class A'
+    | 'Class B'
+    | 'Class C'
+    | 'Defensive Driving'
+    | 'Automatic Transmission'
+    | 'Manual Transmission'
+    | 'manual'
+    | 'automatic'
+    | 'both'
+    | 'Both Transmissions';
   duration: number;
   numberOfLessons: number;
   fee: number;
@@ -102,7 +113,8 @@ export interface Stats {
 
 // Activity types for the activity feed
 export interface Activity {
-  id: string;
+  id?: string;
+  _id?: string;
   type: 'lesson_completed' | 'student_registered' | 'payment_made' | 'lesson_scheduled' | 'lesson_cancelled';
   title: string;
   description: string;

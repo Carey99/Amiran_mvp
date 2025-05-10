@@ -1,26 +1,49 @@
-import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import { QueryClient, QueryFunction, useQuery } from "@tanstack/react-query";
+import { Student } from "@/types"; // Import the Student type
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     const text = (await res.text()) || res.statusText;
+    console.error("Error Response Details:", {
+      status: res.status,
+      statusText: res.statusText,
+      body: text,
+    });
     throw new Error(`${res.status}: ${text}`);
   }
 }
 
-export async function apiRequest(
+export async function apiRequest<T>(
   method: string,
   url: string,
   data?: unknown | undefined,
-): Promise<Response> {
+  returnRawResponse: boolean = false // Optional flag to return raw Response
+): Promise<T | Response> {
+  const user = localStorage.getItem('user');
+  const userId = user ? JSON.parse(user).id : null;
+  const headers: Record<string, string> = {};
+
+  if (userId) {
+    headers['Authorization'] = `Bearer ${userId}`;
+  }
+  if (data) {
+    headers['Content-Type'] = 'application/json';
+  }
+
   const res = await fetch(url, {
     method,
-    headers: data ? { "Content-Type": "application/json" } : {},
+    headers,
     body: data ? JSON.stringify(data) : undefined,
     credentials: "include",
   });
 
   await throwIfResNotOk(res);
-  return res;
+
+  if (returnRawResponse) {
+    return res; // Return the raw Response object
+  }
+
+  return res.json(); // Parse and return the JSON response
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
@@ -29,16 +52,29 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const res = await fetch(queryKey[0] as string, {
-      credentials: "include",
-    });
-
-    if (unauthorizedBehavior === "returnNull" && res.status === 401) {
-      return null;
+    const user = localStorage.getItem('user');
+    const userId = user ? JSON.parse(user).id : null;
+    const headers: Record<string, string> = {};
+    if (userId) {
+      headers['Authorization'] = `Bearer ${userId}`;
     }
 
-    await throwIfResNotOk(res);
-    return await res.json();
+    try {
+      const res = await fetch(queryKey[0] as string, {
+        credentials: "include",
+        headers, // <-- Add this line
+      });
+
+      if (unauthorizedBehavior === "returnNull" && res.status === 401) {
+        return null;
+      }
+
+      await throwIfResNotOk(res);
+      return await res.json();
+    } catch (error) {
+      console.error("Error in getQueryFn:", error);
+      throw error;
+    }
   };
 
 export const queryClient = new QueryClient({
@@ -55,3 +91,5 @@ export const queryClient = new QueryClient({
     },
   },
 });
+
+

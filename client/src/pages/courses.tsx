@@ -15,10 +15,16 @@ import { Course } from '@/types';
 
 // Define standard course fees
 const COURSE_FEES: Record<string, number> = {
-  'A': 5000,
-  'B': 11000,
-  'C': 11000,
-  'Defensive': 15000
+  'Class A': 7000,
+  'Class B': 11000,
+  'Class C': 11000,
+  'Defensive Driving': 11000,
+  'Automatic Transmission': 11000,
+  'Manual Transmission': 11000,
+  'manual': 11000,
+  'automatic': 11000,
+  'both': 11000,
+  'Both Transmissions': 11000,
 };
 
 interface CourseFormData {
@@ -44,19 +50,17 @@ export default function Courses() {
     fee: 5000,
     active: true
   });
+  const [editingCourse, setEditingCourse] = useState<Course | null>(null);
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const { toast } = useToast();
 
   // Fetch courses on mount
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        const response = await fetch('/api/courses');
-        if (response.ok) {
-          const data = await response.json();
-          setCourses(data);
-        } else {
-          console.error('Failed to fetch courses');
-        }
+        const data = await apiRequest('GET', '/api/courses');
+        // Map _id to id for frontend use
+        setCourses((data as any[]).map((c: any) => ({ ...c, id: c._id })));
       } catch (error) {
         console.error('Error fetching courses:', error);
       } finally {
@@ -79,50 +83,75 @@ export default function Courses() {
 
   const handleTypeChange = (value: string) => {
     // Set fee based on course type
-    let fee = 5000; // Default
-    
-    if (value === 'A') fee = COURSE_FEES.A;
-    else if (value === 'B') fee = COURSE_FEES.B;
-    else if (value === 'C') fee = COURSE_FEES.C;
-    else if (value === 'Defensive') fee = COURSE_FEES.Defensive;
-    
-    setFormData(prev => ({ 
-      ...prev, 
+    const fee = COURSE_FEES[value] ?? 7000; // fallback to 5000 if not found
+    setFormData(prev => ({
+      ...prev,
       type: value,
       fee: fee
     }));
   };
 
+  const handleEdit = (course: Course) => {
+    setEditingCourse(course);
+    setFormData({
+      name: course.name,
+      type: course.type,
+      description: course.description,
+      duration: course.duration,
+      numberOfLessons: course.numberOfLessons,
+      fee: course.fee,
+      active: course.active,
+    });
+    setIsDialogOpen(true);
+  };
+
+  const handleDelete = async (courseId: string) => {
+    if (!window.confirm('Are you sure you want to delete this course?')) return;
+    setIsDeleting(courseId);
+    try {
+      const response = await apiRequest('DELETE', `/api/courses/${courseId}`);
+      if (response.ok) {
+        setCourses(prev => prev.filter(c => c.id !== courseId));
+        toast({ title: 'Deleted', description: 'Course deleted.' });
+      } else {
+        toast({ title: 'Error', description: 'Failed to delete course.', variant: 'destructive' });
+      }
+    } finally {
+      setIsDeleting(null);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     try {
-      const response = await apiRequest('POST', '/api/courses', formData);
-      
-      if (response.ok) {
-        const newCourse = await response.json();
-        setCourses(prev => [...prev, newCourse as Course]);
-        
-        toast({
-          title: 'Success',
-          description: 'Course created successfully',
-        });
-        
-        // Reset form and close dialog
-        setFormData({
-          name: '',
-          type: 'automatic',
-          description: '',
-          duration: 4,
-          numberOfLessons: 15,
-          fee: 5000,
-          active: true
-        });
-        setIsDialogOpen(false);
+      let response, newCourse;
+      if (editingCourse) {
+        response = await apiRequest('PUT', `/api/courses/${editingCourse.id}`, formData);
+        if (response.ok) {
+          newCourse = await response.json();
+          setCourses(prev => prev.map(c => c.id === editingCourse.id ? newCourse : c));
+          toast({ title: 'Updated', description: 'Course updated.' });
+        }
       } else {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to create course');
+        response = await apiRequest('POST', '/api/courses', formData);
+        if (response.ok) {
+          newCourse = await response.json();
+          setCourses(prev => [...prev, newCourse as Course]);
+          toast({ title: 'Success', description: 'Course created successfully' });
+        }
       }
+      // Reset form and close dialog
+      setFormData({
+        name: '',
+        type: 'automatic',
+        description: '',
+        duration: 4,
+        numberOfLessons: 15,
+        fee: 5000,
+        active: true
+      });
+      setEditingCourse(null);
+      setIsDialogOpen(false);
     } catch (error: any) {
       toast({
         title: 'Error',
@@ -153,7 +182,7 @@ export default function Courses() {
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
-              <DialogTitle>Add New Course</DialogTitle>
+              <DialogTitle>{editingCourse ? 'Edit Course' : 'Add New Course'}</DialogTitle>
               <DialogDescription>
                 Create a new driving course with lessons and pricing.
               </DialogDescription>
@@ -181,13 +210,16 @@ export default function Courses() {
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="A">Class A</SelectItem>
-                      <SelectItem value="B">Class B</SelectItem>
-                      <SelectItem value="C">Class C</SelectItem>
-                      <SelectItem value="Defensive">Defensive Driving</SelectItem>
-                      <SelectItem value="automatic">Automatic Transmission</SelectItem>
-                      <SelectItem value="manual">Manual Transmission</SelectItem>
-                      <SelectItem value="both">Both Transmissions</SelectItem>
+                      <SelectItem value="Class A">Class A</SelectItem>
+                      <SelectItem value="Class B">Class B</SelectItem>
+                      <SelectItem value="Class C">Class C</SelectItem>
+                      <SelectItem value="Defensive Driving">Defensive Driving</SelectItem>
+                      <SelectItem value="Automatic Transmission">Automatic Transmission</SelectItem>
+                      <SelectItem value="Manual Transmission">Manual Transmission</SelectItem>
+                      <SelectItem value="manual">manual</SelectItem>
+                      <SelectItem value="automatic">automatic</SelectItem>
+                      <SelectItem value="both">both</SelectItem>
+                      <SelectItem value="Both Transmissions">Both Transmissions</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -299,10 +331,10 @@ export default function Courses() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="icon">
+                        <Button variant="ghost" size="icon" onClick={() => handleEdit(course)}>
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="icon">
+                        <Button variant="ghost" size="icon" onClick={() => handleDelete(course.id)} disabled={isDeleting === course.id}>
                           <Trash className="h-4 w-4" />
                         </Button>
                       </div>

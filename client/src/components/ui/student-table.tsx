@@ -1,5 +1,6 @@
 import { Student } from '@/types';
 import { Loader2 } from 'lucide-react';
+import { useState } from 'react';
 import { 
   Table, 
   TableBody, 
@@ -16,6 +17,21 @@ interface StudentTableProps {
 }
 
 export function StudentTable({ students, isLoading }: StudentTableProps) {
+  const [filter, setFilter] = useState<'all' | 'paid' | 'partial' | 'unpaid'>('all');
+
+  const filteredStudents = students.filter(student => {
+    const completedLessons = student.lessons?.filter(lesson => lesson.completed)?.length || 0;
+    const totalLessons = student.courseId?.numberOfLessons || 0;
+    const progress = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
+    const paymentStatus = student.balance <= 0 
+      ? "paid" 
+      : student.balance < student.courseFee / 2 
+        ? "partial" 
+        : "unpaid";
+    if (filter === 'all') return true;
+    return paymentStatus === filter;
+  });
+
   if (isLoading) {
     return (
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
@@ -31,7 +47,34 @@ export function StudentTable({ students, isLoading }: StudentTableProps) {
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
       <h2 className="text-lg font-bold mb-4">Active Students</h2>
       
-      {students.length === 0 ? (
+      <div className="flex gap-2 mb-4">
+        <button
+          className={`px-3 py-1 rounded ${filter === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-100'}`}
+          onClick={() => setFilter('all')}
+        >
+          All
+        </button>
+        <button
+          className={`px-3 py-1 rounded ${filter === 'paid' ? 'bg-green-600 text-white' : 'bg-gray-100'}`}
+          onClick={() => setFilter('paid')}
+        >
+          Paid
+        </button>
+        <button
+          className={`px-3 py-1 rounded ${filter === 'partial' ? 'bg-amber-600 text-white' : 'bg-gray-100'}`}
+          onClick={() => setFilter('partial')}
+        >
+          Partial
+        </button>
+        <button
+          className={`px-3 py-1 rounded ${filter === 'unpaid' ? 'bg-red-600 text-white' : 'bg-gray-100'}`}
+          onClick={() => setFilter('unpaid')}
+        >
+          Unpaid
+        </button>
+      </div>
+
+      {filteredStudents.length === 0 ? (
         <div className="text-center py-16 text-gray-500">
           <p>No active students found</p>
         </div>
@@ -47,7 +90,7 @@ export function StudentTable({ students, isLoading }: StudentTableProps) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {students.map((student, index) => {
+              {filteredStudents.map((student, index) => {
                 const completedLessons = student.lessons?.filter(lesson => lesson.completed)?.length || 0;
                 const totalLessons = student.courseId?.numberOfLessons || 0;
                 const progress = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;

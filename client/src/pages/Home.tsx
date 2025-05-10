@@ -2,32 +2,36 @@ import { useState } from "react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { ChevronRight, Award, Clock, Users, BookOpen, Shield, Menu, X } from "lucide-react";
+import { FaFacebookF, FaInstagram, FaWhatsapp } from "react-icons/fa";
 
 export default function Home() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false); // State for menu toggle
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-gray-100 to-gray-200">
       {/* Header */}
-      <header className="bg-white shadow-md sticky top-0 z-50">
+      <header className="bg-gradient-to-r from-blue-900 via-blue-700 to-blue-600 shadow-lg sticky top-0 z-50 border-b-4 border-yellow-400">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          {/* Logo */}
+          {/* Logo and Title */}
           <Link href="/">
-            <h1 className="text-2xl font-bold text-blue-700 cursor-pointer flex items-center whitespace-normal md:whitespace-nowrap">
+            <span className="flex items-center gap-3 cursor-pointer">
               <img
                 src="/images/amiran_logo.jpg"
                 alt="Amiran Driving School Logo"
-                className="h-[5.5rem] w-auto mr-2 object-contain"
+                className="h-16 w-auto object-contain bg-white rounded shadow-md p-1"
+                style={{ imageRendering: "auto" }}
               />
-              Amiran Driving College
-            </h1>
+              <span className="text-3xl font-extrabold bg-gradient-to-r from-yellow-400 via-white to-yellow-400 bg-clip-text text-transparent drop-shadow-lg tracking-wide">
+                Amiran Driving College
+              </span>
+            </span>
           </Link>
 
           {/* Hamburger Menu for Small Screens */}
           <div className="md:hidden">
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="text-blue-700 focus:outline-none"
+              className="text-yellow-400 focus:outline-none"
             >
               {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </button>
@@ -37,19 +41,19 @@ export default function Home() {
           <nav
             className={`${
               isMenuOpen ? "block" : "hidden"
-            } absolute top-full left-0 w-full bg-white shadow-md md:static md:flex md:justify-end md:space-x-6 md:bg-transparent md:shadow-none`}
+            } absolute top-full left-0 w-full bg-blue-900 shadow-md md:static md:flex md:justify-end md:space-x-6 md:bg-transparent md:shadow-none`}
           >
             <ul className="flex flex-col md:flex-row md:space-x-6">
               <li>
                 <Link href="/">
-                  <span className="block text-blue-600 font-medium border-b-2 border-blue-600 pb-1 cursor-pointer hover:text-blue-800 transition-colors duration-300 md:border-none">
+                  <span className="block text-yellow-400 font-bold border-b-2 border-yellow-400 pb-1 cursor-pointer hover:text-white transition-colors duration-300 md:border-none">
                     Home
                   </span>
                 </Link>
               </li>
               <li>
                 <Link href="/apply">
-                  <span className="block text-gray-600 hover:text-blue-600 font-medium cursor-pointer transition-colors duration-300">
+                  <span className="block text-white hover:text-yellow-400 font-bold cursor-pointer transition-colors duration-300">
                     Apply Now
                   </span>
                 </Link>
@@ -60,7 +64,7 @@ export default function Home() {
       </header>
 
       {/* Hero Section */}
-      <section className="sticky top-0 text-white py-20 overflow-hidden bg-black">
+      <section className="relative min-h-[55vh] flex items-center justify-center text-white overflow-hidden bg-black">
         {/* Video Background */}
         <video
           className="absolute inset-0 w-full h-full object-cover opacity-50"
@@ -69,32 +73,29 @@ export default function Home() {
           loop
           muted
           playsInline
-          onPlay={(e) => e.currentTarget.play()} // Ensure the video resumes play
         ></video>
-
         {/* Dark Overlay */}
         <div className="absolute inset-0 bg-black bg-opacity-60"></div>
-
         {/* Overlay Content */}
-        <div className="relative z-10 container mx-auto px-4 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">Drive with Confidence</h1>
-          <p className="text-xl md:text-2xl mb-8 overflow-hidden whitespace-nowrap border-r-2 border-white animate-typewriter">
+        <div className="relative z-10 container mx-auto px-4 text-center py-12">
+          <h1 className="text-3xl md:text-4xl font-extrabold mb-4 drop-shadow-lg">Drive with Confidence</h1>
+          <p className="text-lg md:text-xl mb-8 overflow-hidden whitespace-nowrap border-r-2 border-white animate-typewriter">
             Perfect Your ride with us.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/apply">
               <Button
                 size="lg"
-                className="bg-white text-blue-700 hover:bg-blue-50 shadow-lg hover:shadow-[0_0_15px_3px_rgba(0,128,255,0.5)] transition-shadow duration-300"
+                className="bg-yellow-400 text-blue-900 font-bold hover:bg-yellow-300 shadow-lg transition-shadow duration-300"
               >
                 Apply Now <ChevronRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
-            <Link href="#courses">
+            <Link href="/view-courses">
               <Button
                 size="lg"
                 variant="outline"
-                className="bg-transparent border-white text-white hover:bg-blue-700 hover:shadow-[0_0_15px_3px_rgba(255,165,0,0.5)] transition-shadow duration-300"
+                className="border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-blue-900 transition"
               >
                 View Courses
               </Button>
@@ -106,10 +107,10 @@ export default function Home() {
       {/* Features Section */}
       <section className="py-16 bg-gray-100">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-12">Why Choose Amiran Driving School?</h2>
+          <h2 className="text-3xl font-bold text-center mb-12 text-blue-900">Why Choose Amiran Driving School?</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <FeatureCard
-              icon={<Award className="h-10 w-10 text-blue-600" />}
+              icon={<Award className="h-10 w-10 text-yellow-400" />}
               title="Certified Instructors"
               description="Learn from experienced instructors with proven track records in driver education."
             />
@@ -119,22 +120,22 @@ export default function Home() {
               description="Choose lesson times that fit your schedule with options throughout the week."
             />
             <FeatureCard
-              icon={<Users className="h-10 w-10 text-blue-600" />}
+              icon={<Users className="h-10 w-10 text-green-500" />}
               title="Personalized Learning"
               description="Receive individualized attention and tailored instruction based on your needs."
             />
             <FeatureCard
-              icon={<BookOpen className="h-10 w-10 text-blue-600" />}
+              icon={<BookOpen className="h-10 w-10 text-purple-500" />}
               title="Comprehensive Curriculum"
               description="Cover all aspects of driving from basics to advanced techniques and safety protocols."
             />
             <FeatureCard
-              icon={<Shield className="h-10 w-10 text-blue-600" />}
+              icon={<Shield className="h-10 w-10 text-pink-500" />}
               title="Safety First Approach"
               description="Safety is our top priority with well-maintained vehicles and defensive driving lessons."
             />
             <FeatureCard
-              icon={<Award className="h-10 w-10 text-blue-600" />}
+              icon={<Award className="h-10 w-10 text-yellow-400" />}
               title="NTSA Approved"
               description="All our courses are fully approved and comply with NTSA regulations."
             />
@@ -145,15 +146,14 @@ export default function Home() {
       {/* Courses Section */}
       <section id="courses" className="py-16">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-4">Our Driving Courses</h2>
+          <h2 className="text-3xl font-bold text-center mb-4 text-blue-900">Our Driving Courses</h2>
           <p className="text-gray-600 text-center max-w-3xl mx-auto mb-12">
             We offer a variety of driving courses to meet your needs, whether you're a beginner or looking to upgrade your skills.
           </p>
-          
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {/* Course 1 */}
             <div className="bg-white rounded-lg shadow-md overflow-hidden">
-              <div className="bg-gray-800 text-white p-4">
+              <div className="bg-blue-900 text-yellow-400 p-4">
                 <h3 className="text-xl font-bold">Class A - Motorcycle</h3>
               </div>
               <div className="p-6">
@@ -173,17 +173,16 @@ export default function Home() {
                   </li>
                 </ul>
                 <div className="flex justify-between items-center">
-                  <span className="text-2xl font-bold text-black-700">KES 7,000</span>
+                  <span className="text-2xl font-bold text-blue-900">KES 7,000</span>
                   <Link href="/apply">
-                    <Button size="sm">Apply Now</Button>
+                    <Button size="sm" className="bg-yellow-400 text-blue-900 font-bold hover:bg-yellow-300">Apply Now</Button>
                   </Link>
                 </div>
               </div>
             </div>
-            
             {/* Course 2 */}
             <div className="bg-white rounded-lg shadow-md overflow-hidden">
-              <div className="bg-gray-800 text-white p-4">
+              <div className="bg-blue-900 text-yellow-400 p-4">
                 <h3 className="text-xl font-bold">Class B - Manual</h3>
               </div>
               <div className="p-6">
@@ -203,17 +202,16 @@ export default function Home() {
                   </li>
                 </ul>
                 <div className="flex justify-between items-center">
-                  <span className="text-2xl font-bold text-black-700">KES 11,000</span>
+                  <span className="text-2xl font-bold text-blue-900">KES 11,000</span>
                   <Link href="/apply">
-                    <Button size="sm">Apply Now</Button>
+                    <Button size="sm" className="bg-yellow-400 text-blue-900 font-bold hover:bg-yellow-300">Apply Now</Button>
                   </Link>
                 </div>
               </div>
             </div>
-            
             {/* Course 3 */}
             <div className="bg-white rounded-lg shadow-md overflow-hidden">
-              <div className="bg-gray-800 text-white p-4">
+              <div className="bg-blue-900 text-yellow-400 p-4">
                 <h3 className="text-xl font-bold">Class C - Commercial</h3>
               </div>
               <div className="p-6">
@@ -233,9 +231,9 @@ export default function Home() {
                   </li>
                 </ul>
                 <div className="flex justify-between items-center">
-                  <span className="text-2xl font-bold text-black-700">KES 11,000</span>
+                  <span className="text-2xl font-bold text-blue-900">KES 11,000</span>
                   <Link href="/apply">
-                    <Button size="sm">Apply Now</Button>
+                    <Button size="sm" className="bg-yellow-400 text-blue-900 font-bold hover:bg-yellow-300">Apply Now</Button>
                   </Link>
                 </div>
               </div>
@@ -245,7 +243,7 @@ export default function Home() {
       </section>
 
       {/* CTA Section */}
-      <section className="bg-gray-800 text-white py-16">
+      <section className="bg-gradient-to-r from-blue-900 via-blue-700 to-blue-600 text-white py-16">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl font-bold mb-4">Ready to Start Your Driving Journey?</h2>
           <p className="text-xl mb-8 max-w-3xl mx-auto">
@@ -255,7 +253,7 @@ export default function Home() {
           <Link href="/apply">
             <Button
               size="lg"
-              className="bg-white text-blue-700 hover:bg-blue-50 hover:shadow-[0_0_15px_3px_rgba(0,128,255,0.5)] transition-shadow duration-300"
+              className="bg-yellow-400 text-blue-900 font-bold hover:bg-yellow-300 shadow-lg transition-shadow duration-300"
             >
               Apply Now <ChevronRight className="ml-2 h-5 w-5" />
             </Button>
@@ -272,6 +270,35 @@ export default function Home() {
               <p className="text-gray-400">
                 Perfecting Your Ride with Confidence.
               </p>
+              <div className="flex gap-4 mt-4">
+                <a
+                  href="https://facebook.com/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-gray-400 hover:text-blue-500 transition"
+                  aria-label="Facebook"
+                >
+                  <FaFacebookF size={22} />
+                </a>
+                <a
+                  href="https://instagram.com/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-gray-400 hover:text-pink-500 transition"
+                  aria-label="Instagram"
+                >
+                  <FaInstagram size={22} />
+                </a>
+                <a
+                  href="https://wa.me/254708538416"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-gray-400 hover:text-green-500 transition"
+                  aria-label="WhatsApp"
+                >
+                  <FaWhatsapp size={22} />
+                </a>
+              </div>
             </div>
             <div>
               <h4 className="text-lg font-bold mb-4">Quick Links</h4>
@@ -291,9 +318,9 @@ export default function Home() {
             <div>
               <h4 className="text-lg font-bold mb-4">Courses</h4>
               <ul className="space-y-2">
-                <li><a href="#courses" className="text-gray-400 hover:text-white">Class A - Motorcycle</a></li>
-                <li><a href="#courses" className="text-gray-400 hover:text-white">Class B - Manual</a></li>
-                <li><a href="#courses" className="text-gray-400 hover:text-white">Class C - Commercial</a></li>
+                <li><a href="/view-courses" className="text-gray-400 hover:text-white">Class A - Motorcycle</a></li>
+                <li><a href="/view-courses" className="text-gray-400 hover:text-white">Class B - Manual</a></li>
+                <li><a href="/view-courses" className="text-gray-400 hover:text-white">Class C - Commercial</a></li>
               </ul>
             </div>
             <div>
@@ -322,8 +349,8 @@ function FeatureCard({ icon, title, description }: {
 }) {
   return (
     <div className="bg-white p-6 rounded-lg shadow-md hover:shadow-[0_0_15px_3px_rgba(128,128,255,0.5)] transition-shadow duration-300">
-      <div className="mb-4">{icon}</div>
-      <h3 className="text-xl font-bold mb-2">{title}</h3>
+      <div className="mb-4 flex justify-center">{icon}</div>
+      <h3 className="text-xl font-bold mb-2 text-blue-900">{title}</h3>
       <p className="text-gray-600">{description}</p>
     </div>
   );

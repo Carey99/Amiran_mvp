@@ -23,4 +23,5 @@ const ActivitySchema: Schema = new Schema({
 });
 
 // Export the Activity model
-export const Activity = mongoose.model<IActivity>('Activity', ActivitySchema);
+export const Activity = mongoose.models.Activity || mongoose.model('Activity', ActivitySchema);
+

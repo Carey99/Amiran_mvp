@@ -13,7 +13,10 @@ export default function Students() {
   const { data: activeStudents, isLoading: isLoadingActive } = useActiveStudents();
   
   const [searchQuery, setSearchQuery] = useState('');
-  
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+  const [uploading, setUploading] = useState(false);
+
   // Get finished students 
   const finishedStudents = allStudents?.filter(student => 
     student.status === 'completed' || 
@@ -56,11 +59,11 @@ export default function Students() {
   };
   
   // Handle export to Excel
-  const exportToExcel = (studentList: Student[], tabName: string) => {
-    // Here we would implement export functionality
-    console.log(`Exporting ${studentList.length} students from ${tabName} tab to Excel`);
-    alert(`Exporting ${studentList.length} students from ${tabName} tab to Excel (to be implemented)`);
-  };
+  //const exportToExcel = (studentList: Student[], tabName: string) => {
+  // Here we would implement export functionality
+  // console.log(`Exporting ${studentList.length} students from ${tabName} tab to Excel`);
+  //  alert(`Exporting ${studentList.length} students from ${tabName} tab to Excel (to be implemented)`);
+  //};
   
   // Filter students based on search query
   const filterStudents = (students: Student[] | undefined) => {
@@ -75,6 +78,33 @@ export default function Students() {
     );
   };
 
+  // Handle photo upload
+  const handlePhotoUpload = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!selectedStudent) return;
+    const fileInput = e.currentTarget.elements.namedItem('photo') as HTMLInputElement;
+    if (fileInput?.files?.[0]) {
+      setUploading(true);
+      const formData = new FormData();
+      formData.append('photo', fileInput.files[0]);
+      try {
+        const res = await fetch(`/api/students/${selectedStudent.id}/photo`, {
+          method: 'POST',
+          body: formData,
+          // Add Authorization header if needed
+        });
+        if (!res.ok) throw new Error('Upload failed');
+        const updatedStudent = await res.json();
+        setSelectedStudent(updatedStudent);
+        alert('Photo uploaded successfully!');
+      } catch (err) {
+        alert('Photo upload failed.');
+      } finally {
+        setUploading(false);
+      }
+    }
+  };
+
   return (
     <AppLayout>
       {/* Page Header */}
@@ -83,12 +113,6 @@ export default function Students() {
           <h1 className="text-2xl font-bold text-gray-900">Students</h1>
           <p className="mt-1 text-sm text-gray-600">Manage all registered students</p>
         </div>
-        <Link href="/admin/students/new">
-          <Button className="bg-primary hover:bg-primary-dark text-white">
-            <span className="mr-1">+</span>
-            <span>Add Student</span>
-          </Button>
-        </Link>
       </div>
       
       {/* Search and filters */}
@@ -124,15 +148,6 @@ export default function Students() {
               <span>Finished</span>
             </TabsTrigger>
           </TabsList>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="flex items-center gap-1"
-            onClick={() => exportToExcel(filterStudents(allStudents), 'active')}
-          >
-            <Download className="h-4 w-4" />
-            <span>Export</span>
-          </Button>
         </div>
 
         {/* All Students Tab */}
@@ -219,11 +234,16 @@ export default function Students() {
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <Link href={`/admin/students/${student.id}`}>
-                            <Button variant="link" className="text-primary hover:text-primary-dark p-0 mr-3">
-                              View
-                            </Button>
-                          </Link>
+                          <Button
+                            variant="link"
+                            className="text-primary hover:text-primary-dark p-0 mr-3"
+                            onClick={() => {
+                              setSelectedStudent(student);
+                              setIsDialogOpen(true);
+                            }}
+                          >
+                            View
+                          </Button>
                         </td>
                       </tr>
                     ))}
@@ -288,6 +308,9 @@ export default function Students() {
                       const completedLessons = student.lessons && student.lessons.filter(lesson => lesson.completed).length || 0;
                       const totalLessons = student.courseId && student.courseId.numberOfLessons || 0;
                       const progressPercentage = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
+
+                      console.log("Student object:", student); // Debugging log
+                      console.log("Student phone:", student.phone); // Debugging log
                       
                       return (
                         <tr key={student.id}>
@@ -330,7 +353,7 @@ export default function Students() {
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <Link href={`/admin/students/${student.id}/lessons`}>
+                            <Link href={`/admin/students/phone/${student.phone}/lessons`}>
                               <Button variant="link" className="text-primary hover:text-primary-dark p-0 mr-3">
                                 Lessons
                               </Button>
@@ -390,9 +413,9 @@ export default function Students() {
                       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Completion Date
                       </th>
-                      <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      {/*<th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Actions
-                      </th>
+                      </th>*/}
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
@@ -437,11 +460,6 @@ export default function Students() {
                                 Certificate
                               </Button>
                             </Link>
-                            <Link href={`/admin/students/${student.id}`}>
-                              <Button variant="link" className="text-gray-600 hover:text-gray-900 p-0">
-                                View
-                              </Button>
-                            </Link>
                           </td>
                         </tr>
                       );
@@ -458,6 +476,43 @@ export default function Students() {
           )}
         </TabsContent>
       </Tabs>
+
+      {/* Student Details Dialog */}
+      {isDialogOpen && selectedStudent && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md relative">
+            <button
+              className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"
+              onClick={() => setIsDialogOpen(false)}
+            >
+              ×
+            </button>
+            <h2 className="text-xl font-bold mb-4">{selectedStudent.firstName} {selectedStudent.lastName}</h2>
+            <div className="mb-4">
+              <div className="flex items-center gap-4">
+                <img
+                  src={selectedStudent.photoUrl || "/placeholder-profile.png"}
+                  alt="Student"
+                  className="w-24 h-24 rounded-full object-cover border"
+                />
+                <form onSubmit={handlePhotoUpload}>
+                  <input type="file" name="photo" accept="image/*" className="mb-2" required />
+                  <Button type="submit" size="sm" disabled={uploading}>
+                    {uploading ? "Uploading..." : "Upload Photo"}
+                  </Button>
+                </form>
+              </div>
+            </div>
+            <div>
+              <div><b>Email:</b> {selectedStudent.email || 'N/A'}</div>
+              <div><b>Phone:</b> {selectedStudent.phone || 'N/A'}</div>
+              <div><b>Course:</b> {selectedStudent.courseId?.name || 'N/A'}</div>
+              <div><b>Status:</b> {selectedStudent.status || 'N/A'}</div>
+              {/* Add more fields as needed */}
+            </div>
+          </div>
+        </div>
+      )}
     </AppLayout>
   );
 }

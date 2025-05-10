@@ -1,13 +1,10 @@
-
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './dialog';
 import { Input } from './input';
 import { Button } from './button';
 import { Label } from './label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './select';
-import { useCourses } from '@/hooks/use-courses';
 import { useQueryClient } from '@tanstack/react-query';
-import { Student } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 
@@ -17,7 +14,6 @@ interface StudentRegistrationDialogProps {
 }
 
 export function StudentRegistrationDialog({ isOpen, onClose }: StudentRegistrationDialogProps) {
-  const { data: courses } = useCourses();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -35,16 +31,11 @@ export function StudentRegistrationDialog({ isOpen, onClose }: StudentRegistrati
     setIsSubmitting(true);
 
     try {
-      await apiRequest.post('/api/students', {
+      await apiRequest('POST', '/api/students', {
         ...formData,
         status: 'prospect'
       });
 
-      queryClient.invalidateQueries(['students']);
-      toast({
-        title: 'Success',
-        description: 'Prospect registered successfully',
-      });
       onClose();
     } catch (error) {
       toast({
@@ -122,11 +113,9 @@ export function StudentRegistrationDialog({ isOpen, onClose }: StudentRegistrati
                 <SelectValue placeholder="Select a course" />
               </SelectTrigger>
               <SelectContent>
-                {courses?.map((course) => (
-                  <SelectItem key={course.id} value={course.id}>
-                    {course.name}
-                  </SelectItem>
-                ))}
+                <SelectItem value="course-1">Class A</SelectItem>
+                <SelectItem value="course-2">Class B</SelectItem>
+                <SelectItem value="course-3">Class C</SelectItem>
               </SelectContent>
             </Select>
           </div>

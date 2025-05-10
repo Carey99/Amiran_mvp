@@ -9,6 +9,8 @@ import { useActiveStudents } from '@/hooks/use-students';
 import { useRecentActivities } from '@/hooks/use-activities';
 import { StudentRegistrationDialog } from '@/components/ui/student-registration-dialog';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { PaymentDialog } from '@/components/ui/payment-dialog';
 
 export default function Dashboard() {
   const { data: stats, isLoading: statsLoading } = useStats();
@@ -20,7 +22,6 @@ export default function Dashboard() {
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
 
   const filteredStudents = activeStudents?.filter(student => 
-    student.status === 'prospect' && 
     (student.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
      student.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
      student.phone.includes(searchQuery))
@@ -35,7 +36,7 @@ export default function Dashboard() {
           <p className="mt-1 text-sm text-gray-600">Welcome to Amiran Driving School Management System</p>
         </div>
         <Button 
-          onClick={() => setShowRegistrationDialog(true)}
+          onClick={() => window.open('/apply', '_blank')}
           className="bg-primary hover:bg-primary-dark text-white"
         >
           <span className="mr-1">+</span> New Prospect

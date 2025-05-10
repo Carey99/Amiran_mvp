@@ -2,10 +2,12 @@ import { Request, Response } from 'express';
 import { Types } from 'mongoose';
 import { storage } from '../storage';
 import { sendEmail } from '../services/emailService';
+import { Activity } from '@shared/models/activity';
 
 // Register a new student
 export const registerStudent = async (req: Request, res: Response) => {
   try {
+    console.log('registerStudent called');
     const { firstName, lastName, email, phone, idNumber, courseId, branch } = req.body;
 
     // Validate the required fields
@@ -77,6 +79,21 @@ export const registerStudent = async (req: Request, res: Response) => {
         </div>
       `,
     });
+
+    try {
+      const activity = await Activity.create({
+        type: 'student_registered',
+        title: 'Student Registered',
+        description: `${firstName} ${lastName} registered for ${course.name}`,
+        timestamp: new Date(),
+        icon: 'person_add', // <-- updated icon
+        iconColor: '#2563eb',
+        iconBgColor: '#e0e7ff',
+      });
+      console.log('Activity created (student_registered):', activity);
+    } catch (err) {
+      console.error('Failed to create activity (student_registered):', err);
+    }
 
     res.status(201).json({
       message: 'Student registered successfully',
@@ -185,6 +202,7 @@ export const getStudentById = async (req: Request, res: Response) => {
 // Update student lesson
 export const updateStudentLesson = async (req: Request, res: Response) => {
   try {
+    console.log('updateStudentLesson called');
     const { id } = req.params;
     const { lessonNumber, completed, instructor, notes } = req.body;
     
@@ -224,7 +242,42 @@ export const updateStudentLesson = async (req: Request, res: Response) => {
     };
     
     // Update the student
-    const updatedStudent = await storage.updateStudent(id, { lessons: updatedLessons });
+    const updatedStudent = await storage.updateStudent(student._id.toString(), { lessons: updatedLessons });
+
+    if (completed) {
+      try {
+        // Log model and connection info
+        console.log('Mongoose connection readyState:', require('mongoose').connection.readyState);
+        console.log('Activity model keys:', Object.keys(require('mongoose').models));
+
+        const activity = await Activity.create({
+          type: 'lesson_completed',
+          title: 'Lesson Completed',
+          description: `${student.firstName} ${student.lastName} completed Lesson ${lessonNumber}`,
+          timestamp: new Date(),
+          icon: 'done', // <-- changed from 'check' or 'check-circle' to 'done'
+          iconColor: '#22c55e',
+          iconBgColor: '#e7f9ef',
+        });
+        console.log('Activity created (lesson_completed):', activity);
+      } catch (err) {
+        console.error('Failed to create activity (lesson_completed):', err);
+        if (err instanceof Error) {
+          console.error('Error message:', err.message);
+          console.error('Error stack:', err.stack);
+        }
+        // Log the attempted activity data for debugging
+        console.error('Attempted activity data:', {
+          type: 'lesson_completed',
+          title: 'Lesson Completed',
+          description: `${student.firstName} ${student.lastName} completed Lesson ${lessonNumber}`,
+          timestamp: new Date(),
+          icon: 'check-circle',
+          iconColor: '#22c55e',
+          iconBgColor: '#e7f9ef',
+        });
+      }
+    }
     
     res.status(200).json({
       message: 'Student lesson updated successfully',
@@ -232,6 +285,153 @@ export const updateStudentLesson = async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('Error updating student lesson:', error);
+    res.status(500).json({ message: 'Server error', error: (error as Error).message });
+  }
+};
+
+export const updateStudentLessonFlexible = async (req: Request, res: Response) => {
+  try {
+    console.log('updateStudentLessonFlexible called');
+    const { id, phone } = req.params;
+    const { lessonNumber, completed, instructor, notes } = req.body;
+
+    if ((!id && !phone) || lessonNumber === undefined) {
+      return res.status(400).json({ message: 'Student ID or phone and lesson number are required' });
+    }
+
+    // Fetch student by id or phone
+    let student;
+    if (id) {
+      student = await storage.getStudent(id);
+    } else if (phone) {
+      student = await storage.getStudentByPhone(phone);
+    }
+
+    if (!student) {
+      return res.status(404).json({ message: 'Student not found' });
+    }
+
+    // Find the lesson to update
+    const lessonIndex = student.lessons.findIndex(lesson => lesson.lessonNumber === lessonNumber);
+    
+    if (lessonIndex === -1) {
+      return res.status(404).json({ message: 'Lesson not found' });
+    }
+    
+    // Check if student has payment restrictions
+    if (lessonNumber >= 13 && student.balance > 0 && completed) {
+      return res.status(403).json({ 
+        message: 'Payment required before accessing lessons beyond lesson 13',
+        balance: student.balance
+      });
+    }
+    
+    // Update the lesson
+    const updatedLessons = [...student.lessons];
+    updatedLessons[lessonIndex] = {
+      ...updatedLessons[lessonIndex],
+      completed: completed !== undefined ? completed : updatedLessons[lessonIndex].completed,
+      date: completed ? new Date() : updatedLessons[lessonIndex].date,
+      instructor: instructor ? new Types.ObjectId(instructor) : updatedLessons[lessonIndex].instructor,
+      notes: notes || updatedLessons[lessonIndex].notes,
+    };
+    
+    // Update the student
+    const updatedStudent = await storage.updateStudent(student._id.toString(), { lessons: updatedLessons });
+
+    if (completed) {
+      try {
+        // Log model and connection info
+        console.log('Mongoose connection readyState:', require('mongoose').connection.readyState);
+        console.log('Activity model keys:', Object.keys(require('mongoose').models));
+
+        const activity = await Activity.create({
+          type: 'lesson_completed',
+          title: 'Lesson Completed',
+          description: `${student.firstName} ${student.lastName} completed Lesson ${lessonNumber}`,
+          timestamp: new Date(),
+          icon: 'done', // <-- changed from 'check-circle' to 'done'
+          iconColor: '#22c55e',
+          iconBgColor: '#e7f9ef',
+        });
+        console.log('Activity created (lesson_completed):', activity);
+      } catch (err) {
+        console.error('Failed to create activity (lesson_completed):', err);
+        if (err instanceof Error) {
+          console.error('Error message:', err.message);
+          console.error('Error stack:', err.stack);
+        }
+        // Log the attempted activity data for debugging
+        console.error('Attempted activity data:', {
+          type: 'lesson_completed',
+          title: 'Lesson Completed',
+          description: `${student.firstName} ${student.lastName} completed Lesson ${lessonNumber}`,
+          timestamp: new Date(),
+          icon: 'check-circle',
+          iconColor: '#22c55e',
+          iconBgColor: '#e7f9ef',
+        });
+      }
+    }
+    
+    res.status(200).json({
+      message: 'Student lesson updated successfully',
+      student: updatedStudent,
+    });
+  } catch (error) {
+    console.error('Error updating student lesson:', error);
+    res.status(500).json({ message: 'Server error', error: (error as Error).message });
+  }
+};
+
+export const updateStudentLessons = async (req: Request, res: Response) => {
+  try {
+    console.log('updateStudentLessons called');
+    const { phone } = req.params;
+    const { lessons } = req.body;
+
+    if (!phone || !lessons || !Array.isArray(lessons)) {
+      return res.status(400).json({ message: 'Phone and lessons array are required' });
+    }
+
+    // Fetch student by phone
+    const student = await storage.getStudentByPhone(phone);
+    if (!student) {
+      return res.status(404).json({ message: 'Student not found' });
+    }
+
+    // Find lessons just marked as completed
+    const justCompleted = lessons.filter(
+      l => l.completed && !student.lessons.find(sl => sl.lessonNumber === l.lessonNumber && sl.completed)
+    );
+
+    // Update lessons
+    const updatedStudent = await storage.updateStudent(student._id.toString(), { lessons });
+
+    // Log activity for each newly completed lesson
+    for (const lesson of justCompleted) {
+      try {
+        const activity = await Activity.create({
+          type: 'lesson_completed',
+          title: 'Lesson Completed',
+          description: `${student.firstName} ${student.lastName} completed Lesson ${lesson.lessonNumber}`,
+          timestamp: new Date(),
+          icon: 'done', // <-- changed from 'check-circle' to 'done'
+          iconColor: '#22c55e',
+          iconBgColor: '#e7f9ef',
+        });
+        console.log('Activity created (lesson_completed):', activity);
+      } catch (err) {
+        console.error('Failed to create activity (lesson_completed):', err);
+      }
+    }
+
+    res.status(200).json({
+      message: 'Student lessons updated successfully',
+      student: updatedStudent,
+    });
+  } catch (error) {
+    console.error('Error updating student lessons:', error);
     res.status(500).json({ message: 'Server error', error: (error as Error).message });
   }
 };

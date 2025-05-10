@@ -29,21 +29,22 @@ export function RecentActivity({ activities, isLoading }: RecentActivityProps) {
       ) : (
         <div className="space-y-4">
           {activities.map((activity) => (
-            <div key={activity.id} className="flex items-start gap-3 pb-3 border-b last:border-0 border-gray-100">
-              <div 
-                className={`rounded-full w-10 h-10 flex items-center justify-center ${activity.iconBgColor || 'bg-blue-100'}`}
-              >
-                <span className="material-icons text-lg text-blue-500">{activity.icon || 'event_note'}</span>
-              </div>
+            <div
+              key={activity.id || activity._id}
+              className="flex items-start gap-3 pb-3 border-b last:border-0 border-gray-100"
+            >
+              <span className="material-icons text-lg text-blue-500">{activity.icon || 'event_note'}</span>
               <div>
                 <p className="font-medium">{activity.title}</p>
                 <p className="text-sm text-gray-500">{activity.description}</p>
                 <p className="text-xs text-gray-400 mt-1">
-                  {new Date(activity.timestamp).toLocaleDateString('en-US', {
+                  {new Date(activity.timestamp).toLocaleString(undefined, {
+                    year: 'numeric',
                     month: 'short',
                     day: 'numeric',
                     hour: '2-digit',
-                    minute: '2-digit'
+                    minute: '2-digit',
+                    second: '2-digit'
                   })}
                 </p>
               </div>

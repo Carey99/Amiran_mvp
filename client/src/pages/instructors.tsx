@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { User, UserPlus, Phone, Mail, Star, X, CheckIcon } from 'lucide-react';
+import { User, UserPlus, Phone, Mail, Star, X, CheckIcon, Trash2 } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
 import { Instructor } from '@/types';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -40,26 +40,21 @@ export default function Instructors() {
     specialization: ['automatic'],
     active: true
   });
+  const [editingInstructor, setEditingInstructor] = useState<Instructor | null>(null);
   const { toast } = useToast();
 
   // Fetch instructors on mount
   useEffect(() => {
     const fetchInstructors = async () => {
       try {
-        const response = await fetch('/api/instructors');
-        if (response.ok) {
-          const data = await response.json();
-          setInstructors(data);
-        } else {
-          console.error('Failed to fetch instructors');
-        }
+        const data = await apiRequest('GET', '/api/instructors');
+        setInstructors(data as Instructor[]);
       } catch (error) {
         console.error('Error fetching instructors:', error);
       } finally {
         setIsLoading(false);
       }
     };
-
     fetchInstructors();
   }, []);
 
@@ -70,49 +65,48 @@ export default function Instructors() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     try {
-      // Create instructor
-      const response = await apiRequest('POST', '/api/instructors', {
-        user: {
-          username: formData.username,
-          password: formData.password,
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          email: formData.email,
-          phone: formData.phone,
-          role: 'instructor'
-        },
-        specialization: formData.specialization,
-        branch: formData.branch || undefined,
-        active: formData.active
-      });
-      
-      if (response.ok) {
-        const newInstructor = await response.json();
+      if (editingInstructor) {
+        const updated = await apiRequest('PUT', `/api/instructors/${editingInstructor._id}`, { ...formData });
+        setInstructors(prev => prev.map(inst => (inst._id === editingInstructor._id ? updated as Instructor : inst)));
+        toast({ title: 'Success', description: 'Instructor updated successfully' });
+      } else {
+        // Create instructor
+        const newInstructor = await apiRequest('POST', '/api/instructors', {
+          user: {
+            username: formData.username,
+            password: formData.password,
+            firstName: formData.firstName,
+            lastName: formData.lastName,
+            email: formData.email,
+            phone: formData.phone,
+            role: 'instructor'
+          },
+          specialization: formData.specialization,
+          branch: formData.branch || undefined,
+          active: formData.active
+        });
+
         setInstructors(prev => [...prev, newInstructor as Instructor]);
         
         toast({
           title: 'Success',
           description: 'Instructor added successfully',
         });
-        
-        // Reset form and close dialog
-        setFormData({
-          username: '',
-          password: '',
-          firstName: '',
-          lastName: '',
-          email: '',
-          phone: '',
-          specialization: ['automatic'],
-          active: true
-        });
-        setIsDialogOpen(false);
-      } else {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to add instructor');
       }
+      // Reset form and close dialog
+      setFormData({
+        username: '',
+        password: '',
+        firstName: '',
+        lastName: '',
+        email: '',
+        phone: '',
+        specialization: ['automatic'],
+        active: true
+      });
+      setEditingInstructor(null);
+      setIsDialogOpen(false);
     } catch (error: any) {
       toast({
         title: 'Error',
@@ -140,6 +134,20 @@ export default function Instructors() {
     }
   };
 
+  const handleDelete = async (id: string) => {
+    if (!id) {
+      toast({ title: 'Error', description: 'Instructor ID is missing', variant: 'destructive' });
+      return;
+    }
+    try {
+      await apiRequest('DELETE', `/api/instructors/${id}`);
+      setInstructors(prev => prev.filter(inst => inst._id !== id));
+      toast({ title: 'Deleted', description: 'Instructor deleted.' });
+    } catch (error: any) {
+      toast({ title: 'Error', description: error.message || 'Delete failed', variant: 'destructive' });
+    }
+  };
+
   return (
     <AppLayout>
       <div className="flex justify-between items-center mb-6">
@@ -147,7 +155,10 @@ export default function Instructors() {
           <h1 className="text-2xl font-bold text-gray-900">Instructors</h1>
           <p className="mt-1 text-sm text-gray-600">Manage driving instructors</p>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <Dialog open={isDialogOpen} onOpenChange={(open) => {
+          setIsDialogOpen(open);
+          if (!open) setEditingInstructor(null);
+        }}>
           <DialogTrigger asChild>
             <Button className="flex items-center gap-1">
               <UserPlus className="h-4 w-4" />
@@ -156,9 +167,9 @@ export default function Instructors() {
           </DialogTrigger>
           <DialogContent className="sm:max-w-[525px]">
             <DialogHeader>
-              <DialogTitle>Add New Instructor</DialogTitle>
+              <DialogTitle>{editingInstructor ? 'Edit Instructor' : 'Add New Instructor'}</DialogTitle>
               <DialogDescription>
-                Add a new instructor to your driving school.
+                {editingInstructor ? 'Edit the instructor details.' : 'Add a new instructor to your driving school.'}
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSubmit}>
@@ -337,7 +348,7 @@ export default function Instructors() {
                 </div>
               </div>
               <DialogFooter>
-                <Button type="submit">Add Instructor</Button>
+                <Button type="submit">{editingInstructor ? 'Update Instructor' : 'Add Instructor'}</Button>
               </DialogFooter>
             </form>
           </DialogContent>
@@ -413,11 +424,33 @@ export default function Instructors() {
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-2">
-                        <Button variant="ghost" size="sm">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setEditingInstructor(instructor);
+                            setFormData({
+                              username: instructor.userId?.username || '',
+                              password: '',
+                              firstName: instructor.userId?.firstName || '',
+                              lastName: instructor.userId?.lastName || '',
+                              email: instructor.userId?.email || '',
+                              phone: instructor.userId?.phone || '',
+                              specialization: instructor.specialization || [],
+                              branch: instructor.branch || '',
+                              active: instructor.active,
+                            });
+                            setIsDialogOpen(true);
+                          }}
+                        >
                           Edit
                         </Button>
-                        <Button variant="ghost" size="sm">
-                          Schedule
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDelete(instructor._id)} // Using _id, not id
+                        >
+                          <Trash2 className="h-4 w-4 text-red-500" />
                         </Button>
                       </div>
                     </TableCell>

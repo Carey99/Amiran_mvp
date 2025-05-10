@@ -1,9 +1,10 @@
 import { Schema, model, Document, Types } from 'mongoose';
 import mongoose from 'mongoose';
+import { IStudent } from './student';
 
 // Define interface for Payment document
 export interface IPayment extends Document {
-  studentId: Types.ObjectId;
+  studentId: Types.ObjectId | IStudent;
   amount: number;
   paymentMethod: 'mpesa' | 'cash' | 'bank' | 'other';
   transactionId?: string;
@@ -11,7 +12,7 @@ export interface IPayment extends Document {
   lessonCovered?: number;
   notes?: string;
   receiptNumber: string;
-  createdBy: Types.ObjectId;
+  createdBy?: Types.ObjectId; // Made optional
   branch?: Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
@@ -39,7 +40,10 @@ const paymentSchema = new Schema<IPayment>(
     },
     paymentDate: { 
       type: Date, 
-      default: Date.now 
+      default: () => {
+        const now = new Date();
+        return new Date(now.getTime() + 3 * 60 * 60 * 1000); // Add 3 hours to UTC
+      }
     },
     lessonCovered: { 
       type: Number 
@@ -54,8 +58,7 @@ const paymentSchema = new Schema<IPayment>(
     },
     createdBy: { 
       type: Schema.Types.ObjectId, 
-      ref: 'User', 
-      required: true 
+      ref: 'User' // Removed `required: true` to make it optional
     },
     branch: { 
       type: Schema.Types.ObjectId, 
@@ -67,12 +70,23 @@ const paymentSchema = new Schema<IPayment>(
   }
 );
 
+// Add indexes for performance
+paymentSchema.index({ paymentDate: -1 }); // Index for sorting by paymentDate
+paymentSchema.index({ studentId: 1 }); // Index for filtering by studentId
+
 // Add a pre-save hook to generate a receipt number if not provided
 paymentSchema.pre('save', function (next) {
-  if (!this.receiptNumber) {
-    this.receiptNumber = `RCPT-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+  try {
+    if (!this.receiptNumber) {
+      const now = new Date();
+      const eastAfricanTime = new Date(now.getTime() + 3 * 60 * 60 * 1000); // Add 3 hours to UTC
+      this.receiptNumber = `RCPT-${eastAfricanTime.toISOString().replace(/[-:.TZ]/g, '')}-${Math.floor(Math.random() * 1000)}`;
+    }
+    next();
+  } catch (error) {
+    console.error('Error generating receipt number:', error);
+    next(error);
   }
-  next();
 });
 
 // Create and export Payment model

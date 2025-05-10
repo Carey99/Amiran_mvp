@@ -6,7 +6,7 @@ import { createServer as createViteServer, createLogger } from "vite";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 import { type Server } from "http";
-import viteConfig from "../vite.config";
+import viteConfigFn from "../vite.config"; // FIX: renamed to show it's a function
 import { nanoid } from "nanoid";
 
 const viteLogger = createLogger();
@@ -26,18 +26,13 @@ export async function setupVite(app: Express, server: Server) {
   const serverOptions = {
     middlewareMode: true,
     hmr: { server },
-    host: true,
-    strictPort: true,
-    server: {
-      hmr: {
-        clientPort: 443,
-        host: true
-      }
-    }
+    allowedHosts: ["localhost", "amiran-mvp.vercel.app"], // Replace with your allowed hosts
   };
 
+  const resolvedViteConfig = await viteConfigFn({ mode: "development", command: "serve" }); // ✅ Pass the required ConfigEnv argument
+
   const vite = await createViteServer({
-    ...viteConfig,
+    ...resolvedViteConfig,
     configFile: false,
     customLogger: {
       ...viteLogger,
@@ -50,24 +45,25 @@ export async function setupVite(app: Express, server: Server) {
     appType: "custom",
   });
 
+  console.log("Resolved alias config:", resolvedViteConfig.resolve?.alias); // Optional: confirm alias paths
+
   app.use(vite.middlewares);
   app.use("*", async (req, res, next) => {
     const url = req.originalUrl;
 
     try {
       const clientTemplate = path.resolve(
-        __dirname,
-        "..",
+        process.cwd(),
         "client",
-        "index.html",
+        "index.html"
       );
 
-      // always reload the index.html file from disk incase it changes
       let template = await fs.promises.readFile(clientTemplate, "utf-8");
       template = template.replace(
         `src="/src/main.tsx"`,
-        `src="/src/main.tsx?v=${nanoid()}"`,
+        `src="/src/main.tsx?v=${nanoid()}"`
       );
+
       const page = await vite.transformIndexHtml(url, template);
       res.status(200).set({ "Content-Type": "text/html" }).end(page);
     } catch (e) {
@@ -82,13 +78,12 @@ export function serveStatic(app: Express) {
 
   if (!fs.existsSync(distPath)) {
     throw new Error(
-      `Could not find the build directory: ${distPath}, make sure to build the client first`,
+      `Could not find the build directory: ${distPath}, make sure to build the client first`
     );
   }
 
   app.use(express.static(distPath));
 
-  // fall through to index.html if the file doesn't exist
   app.use("*", (_req, res) => {
     res.sendFile(path.resolve(distPath, "index.html"));
   });

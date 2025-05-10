@@ -46,7 +46,18 @@ export const studentSchema = z.object({
 export const courseSchema = z.object({
   name: z.string().min(3),
   description: z.string().min(10),
-  type: z.enum(['manual', 'automatic', 'both']),
+  type: z.enum([
+    'Class A',
+    'Class B',
+    'Class C',
+    'Defensive Driving',
+    'Automatic Transmission',
+    'Manual Transmission',
+    'manual',
+    'automatic',
+    'both',
+    'Both Transmissions'
+  ]),
   duration: z.number(),
   numberOfLessons: z.number(),
   fee: z.number(),
@@ -55,14 +66,13 @@ export const courseSchema = z.object({
 
 // Payment validation schema
 export const paymentSchema = z.object({
-  studentId: objectIdSchema, // Allow string or ObjectId
-  amount: z.number().positive(),
-  paymentMethod: z.enum(['mpesa', 'cash', 'bank', 'other']),
-  transactionId: z.string().optional(),
-  lessonCovered: z.number().optional(),
-  notes: z.string().optional(),
-  createdBy: objectIdSchema.optional(), // Allow string or ObjectId
-  branch: objectIdSchema.optional() // Allow string or ObjectId
+  studentId: objectIdSchema, // Validate that studentId is a string or ObjectId
+  amount: z.number().positive(), // Ensure amount is a positive number
+  paymentMethod: z.enum(['mpesa', 'cash', 'bank', 'other']), // Restrict to allowed payment methods
+  paymentDate: z
+    .union([z.string(), z.date()])
+    .optional()
+    .transform((value) => (typeof value === 'string' ? new Date(value) : value)), // Convert strings to Date objects
 });
 
 // Branch validation schema

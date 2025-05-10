@@ -70,17 +70,17 @@ export default function Apply() {
     const fetchCourses = async () => {
       try {
         setIsLoadingCourses(true);
-        const response = await apiRequest("GET", "/api/courses");
-        if (!response.ok) {
-          throw new Error("Failed to fetch courses");
-        }
-        const data = await response.json();
-        setCourses(data.filter((course: Course) => course.name !== "Class E"));
+
+        // Use apiRequest to fetch and parse JSON directly
+        const data = await apiRequest<Course[]>("GET", "/api/courses");
+
+        // Filter out unwanted courses
+        setCourses(data.filter((course) => course.name !== "Class E"));
       } catch (error) {
         console.error("Error fetching courses:", error);
         toast({
           title: "Error",
-          description: "Failed to load available courses. Please try again later.",
+          description: error instanceof Error ? error.message : "An unknown error occurred while loading courses.",
           variant: "destructive",
         });
       } finally {
@@ -95,37 +95,38 @@ export default function Apply() {
   const onSubmit = async (data: FormData) => {
     try {
       setIsLoading(true);
-      const response = await apiRequest("POST", "/api/students/register", data);
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        
-        // Special handling for duplicate ID error
-        if (errorData.status === 'duplicate') {
-          toast({
-            title: "Already Registered",
-            description: "A student with this ID number is already registered in our system.",
-            variant: "destructive",
-          });
-          return;
-        }
-        
-        throw new Error(errorData.message || "Failed to submit application");
+
+      // Use apiRequest to send the POST request and parse the response
+      const response = await apiRequest<{ status?: string; message?: string }>(
+        "POST",
+        "/api/students/register",
+        data
+      );
+
+      // Check for specific error conditions in the parsed response
+      if (response.status === "duplicate") {
+        toast({
+          title: "Already Registered",
+          description: "A student with this ID number is already registered in our system.",
+          variant: "destructive",
+        });
+        return;
       }
-      
+
+      // Handle successful submission
       setSubmitted(true);
       toast({
         title: "Application Submitted",
         description: "Your application has been successfully submitted. We'll contact you soon!",
       });
-      
-      // Reset form
+
+      // Reset the form
       form.reset();
     } catch (error) {
       console.error("Error submitting application:", error);
       toast({
         title: "Error",
-        description: (error as Error).message || "Something went wrong. Please try again.",
+        description: error instanceof Error ? error.message : "Something went wrong. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -135,26 +136,29 @@ export default function Apply() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-blue-50">
-      {/* Header */}
-      <header className="bg-white shadow-md sticky top-0 z-50">
+      {/* Improved Header */}
+      <header className="bg-gradient-to-r from-blue-900 via-blue-700 to-blue-600 shadow-lg sticky top-0 z-50 border-b-4 border-yellow-400">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          {/* Logo */}
+          {/* Logo and Title */}
           <Link href="/">
-            <h1 className="text-2xl font-bold text-blue-700 cursor-pointer flex items-center whitespace-normal md:whitespace-nowrap">
+            <span className="flex items-center gap-3 cursor-pointer">
               <img
                 src="/images/amiran_logo.jpg"
                 alt="Amiran Driving School Logo"
-                className="h-[5.5rem] w-auto mr-2 object-contain"
+                className="h-16 w-auto object-contain bg-white rounded shadow-md p-1"
+                style={{ imageRendering: "auto" }}
               />
-              Amiran Driving College
-            </h1>
+              <span className="text-3xl font-extrabold bg-gradient-to-r from-yellow-400 via-white to-yellow-400 bg-clip-text text-transparent drop-shadow-lg tracking-wide">
+                Amiran Driving College
+              </span>
+            </span>
           </Link>
 
           {/* Hamburger Menu for Small Screens */}
           <div className="md:hidden">
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="text-blue-700 focus:outline-none"
+              className="text-yellow-400 focus:outline-none"
             >
               {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </button>
@@ -164,19 +168,19 @@ export default function Apply() {
           <nav
             className={`${
               isMenuOpen ? "block" : "hidden"
-            } absolute top-full left-0 w-full bg-white shadow-md md:static md:flex md:justify-end md:space-x-6 md:bg-transparent md:shadow-none`}
+            } absolute top-full left-0 w-full bg-blue-900 shadow-md md:static md:flex md:justify-end md:space-x-6 md:bg-transparent md:shadow-none`}
           >
             <ul className="flex flex-col md:flex-row md:space-x-6">
               <li>
                 <Link href="/">
-                  <span className="block text-gray-600 hover:text-blue-600 font-medium cursor-pointer">
+                  <span className="block text-yellow-400 font-bold border-b-2 border-yellow-400 pb-1 cursor-pointer hover:text-white transition-colors duration-300 md:border-none">
                     Home
                   </span>
                 </Link>
               </li>
               <li>
                 <Link href="/apply">
-                  <span className="block text-blue-600 font-medium border-b-2 border-blue-600 pb-1 cursor-pointer">
+                  <span className="block text-white hover:text-yellow-400 font-bold cursor-pointer transition-colors duration-300">
                     Apply Now
                   </span>
                 </Link>

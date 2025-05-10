@@ -21,6 +21,7 @@ export interface IStudent extends Document {
   totalPaid: number;
   courseFee: number;
   branch?: Types.ObjectId;
+  photoUrl?: string; // <-- Add this line
   createdAt: Date;
   updatedAt: Date;
 }
@@ -95,6 +96,10 @@ const studentSchema = new Schema<IStudent>(
     branch: { 
       type: Schema.Types.ObjectId, 
       ref: 'Branch' 
+    },
+    photoUrl: { 
+      type: String, 
+      required: false // <-- Add this field, optional
     }
   },
   { 

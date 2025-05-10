@@ -13,14 +13,18 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
-    // Small delay to prevent flash of loading state for cached auth
+    console.log("ProtectedRoute - isAuthenticated:", isAuthenticated); // Debugging log
+    console.log("ProtectedRoute - user:", user); // Debugging log
+    console.log("ProtectedRoute - current location:", location); // Debugging log
+
     const timer = setTimeout(() => {
       setIsChecking(false);
       if (!isAuthenticated) {
+        console.log("Redirecting to login..."); // Debugging log
         setLocation("/auth/login?redirect=" + encodeURIComponent(location));
       }
     }, 500);
-    
+
     return () => clearTimeout(timer);
   }, [isAuthenticated, setLocation, location]);
 
@@ -33,10 +37,10 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   }
 
   if (!isAuthenticated) {
-    return null; // Not rendering children if not authenticated
+    console.warn("User is not authenticated. Redirecting to login."); // Debugging log
+    return null; // Prevent rendering children
   }
 
-  // Redirect based on user role - except for non-admin routes that have admin equivalents
   const validNonAdminRoutes = [
     '/dashboard', '/students', '/instructors', '/payments', 
     '/courses', '/branches', '/settings', '/reports'
@@ -44,11 +48,11 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const isValidNonAdminRoute = validNonAdminRoutes.some(route => 
     location === route || location.startsWith(`${route}/`)
   );
-  
+
   if (user && (user.role === 'admin' || user.role === 'super_admin') && 
       !location.startsWith('/admin') && 
       !isValidNonAdminRoute) {
-    // Only redirect if not on a valid non-admin route
+    console.log("Redirecting admin user to /admin/dashboard"); // Debugging log
     setLocation('/admin/dashboard');
     return (
       <div className="min-h-screen flex items-center justify-center">

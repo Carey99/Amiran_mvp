@@ -22,12 +22,14 @@ export interface IStorage {
   getActiveStudents(): Promise<IStudent[]>;
   createStudent(student: Partial<IStudent>): Promise<IStudent>;
   updateStudent(id: string, data: Partial<IStudent>): Promise<IStudent | null>;
+  getStudentByPhone(phone: string): Promise<IStudent | null>;
   
   // Instructor operations
   getInstructor(id: string): Promise<IInstructor | null>;
   getInstructors(): Promise<IInstructor[]>;
   createInstructor(instructor: Partial<IInstructor>): Promise<IInstructor>;
   updateInstructor(id: string, data: Partial<IInstructor>): Promise<IInstructor | null>;
+  deleteInstructor(id: string): Promise<IInstructor | null>;
   
   // Course operations
   getCourse(id: string): Promise<ICourse | null>;
@@ -148,6 +150,17 @@ export class MongoStorage implements IStorage {
       throw error;
     }
   }
+
+  async getStudentByPhone(phone: string): Promise<IStudent | null> {
+    try {
+      console.log("Searching for student with phone:", phone); // Debugging log
+      // Find the student by phone number
+      return await Student.findOne({ phone }).populate('courseId');
+    } catch (error) {
+      console.error('Error getting student by phone:', error);
+      throw error;
+    }
+  }
   
   // Instructor operations
   async getInstructor(id: string): Promise<IInstructor | null> {
@@ -183,6 +196,15 @@ export class MongoStorage implements IStorage {
       return await Instructor.findByIdAndUpdate(id, data, { new: true }).populate('userId');
     } catch (error) {
       console.error('Error updating instructor:', error);
+      throw error;
+    }
+  }
+
+  async deleteInstructor(id: string): Promise<IInstructor | null> {
+    try {
+      return await Instructor.findByIdAndDelete(id).populate('userId');
+    } catch (error) {
+      console.error('Error deleting instructor:', error);
       throw error;
     }
   }
@@ -234,6 +256,16 @@ export class MongoStorage implements IStorage {
       throw error;
     }
   }
+
+  //all payments
+  async getPaymentsCollection() {
+    try {
+      return Payment; // Return the Payment model for querying
+    } catch (error) {
+      console.error('Error getting payments collection:', error);
+      throw error;
+    }
+  }
   
   async getPaymentsByStudent(studentId: string): Promise<IPayment[]> {
     try {
@@ -249,10 +281,19 @@ export class MongoStorage implements IStorage {
       // Log the payment data being passed
       console.log('Creating payment with data:', payment);
 
+      // Generate receipt number
+      const now = new Date();
+      const eastAfricanTime = new Date(now.getTime() + 3 * 60 * 60 * 1000); // Add 3 hours to UTC
+      const receiptNumber = `RCP-${eastAfricanTime.toISOString().replace(/[-:.TZ]/g, '')}-${Math.floor(Math.random() * 1000)}`;
+
+      // Ensure paymentDate is valid or default to East African Time
+      const paymentDate = payment.paymentDate || eastAfricanTime;
+
       // Create a new payment object
       const newPayment = new Payment({
         ...payment,
-        receiptNumber: `RCP-${Date.now()}-${Math.floor(Math.random() * 1000)}`, // Generate receipt number
+        receiptNumber, // Use the generated receipt number
+        paymentDate,   // Ensure paymentDate is valid
       });
 
       // Save the payment to the database
@@ -285,6 +326,22 @@ export class MongoStorage implements IStorage {
     } catch (error) {
       console.error('Error creating payment:', error);
       throw error; // Re-throw the error to be handled by the caller
+    }
+  }
+
+  async generateReceipt(paymentId: string): Promise<IPayment | null> {
+    try {
+      // Find the payment by its ID
+      const payment = await Payment.findById(paymentId).populate('studentId').exec();
+
+      if (!payment) {
+        throw new Error('Payment not found');
+      }
+
+      return payment;
+    } catch (error) {
+      console.error('Error generating receipt:', error);
+      throw error;
     }
   }
   

@@ -137,6 +137,7 @@ export default function Login() {
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? "Logging in..." : "Login"}
             </Button>
+            {/* 
             <div className="text-center text-sm">
               Don't have an account?{" "}
               <Link
@@ -146,6 +147,7 @@ export default function Login() {
                 Sign up
               </Link>
             </div>
+            */}
           </CardFooter>
         </form>
       </Card>

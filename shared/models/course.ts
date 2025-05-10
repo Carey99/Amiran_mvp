@@ -5,7 +5,17 @@ import mongoose from 'mongoose';
 export interface ICourse extends Document {
   name: string;
   description: string;
-  type: 'manual' | 'automatic' | 'both';
+  type:
+    | 'Class A'
+    | 'Class B'
+    | 'Class C'
+    | 'Defensive Driving'
+    | 'Automatic Transmission'
+    | 'Manual Transmission'
+    | 'manual'
+    | 'automatic'
+    | 'both'
+    | 'Both Transmissions';
   duration: number; // in weeks
   numberOfLessons: number;
   fee: number;
@@ -27,7 +37,18 @@ const courseSchema = new Schema<ICourse>(
     },
     type: { 
       type: String, 
-      enum: ['manual', 'automatic', 'both'], 
+      enum: [
+        'Class A',
+        'Class B',
+        'Class C',
+        'Defensive Driving',
+        'Automatic Transmission',
+        'Manual Transmission',
+        'manual',
+        'automatic',
+        'both',
+        'Both Transmissions'
+      ], 
       required: true 
     },
     duration: { 

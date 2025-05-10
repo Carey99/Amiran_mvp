@@ -16,6 +16,7 @@ import Login from "@/pages/auth/login";
 import Signup from "@/pages/auth/signup";
 import Home from "@/pages/Home";
 import Apply from "@/pages/Apply";
+import ViewCourses from "@/pages/ViewCourses";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { useState, useEffect } from "react";
@@ -38,6 +39,7 @@ function Router() {
       <Route path="/apply" component={Apply} />
       <Route path="/auth/login" component={Login} />
       <Route path="/auth/signup" component={Signup} />
+      <Route path="/view-courses" component={ViewCourses} />
       
       {/* Protected Routes - Admin Dashboard */}
       <Route path="/admin">
@@ -61,6 +63,12 @@ function Router() {
         {() => <ProtectedRouteWrapper component={StudentLessons} />}
       </Route>
       <Route path="/students/:id">
+        {() => <ProtectedRouteWrapper component={StudentLessons} />}
+      </Route>
+      <Route path="/admin/students/phone/:phone/lessons">
+        {() => <ProtectedRouteWrapper component={StudentLessons} />}
+      </Route>
+      <Route path="/students/phone/:phone/lessons">
         {() => <ProtectedRouteWrapper component={StudentLessons} />}
       </Route>
       

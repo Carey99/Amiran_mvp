@@ -24,7 +24,8 @@ const transformStudent = (data: any): Student => {
         date: lesson.date || null,
         completed: lesson.completed || false,
         instructor: lesson.instructor || '',
-        notes: lesson.notes || ''
+        notes: lesson.notes || '',
+        printed: lesson.printed ?? false // <-- ADD THIS LINE
       }))
     : [];
 

@@ -47,6 +47,7 @@ export default function StudentLessons() {
   const phone = window.location.pathname.split('/')[4];
   const { data: student, isLoading, isError } = useStudentByPhone(phone);
   const [savingLesson, setSavingLesson] = useState<number | null>(null);
+  const [printingLesson, setPrintingLesson] = useState<number | null>(null);
 
   // Track name and ID for receipt
   const [studentName, setStudentName] = useState('');
@@ -105,9 +106,21 @@ export default function StudentLessons() {
     }
   };
 
-  const printLessonReceipt = (lesson: Lesson) => {
+  const printLessonReceipt = async (lesson: Lesson) => {
     if (!student) return;
-    console.log("Student object at print:", student);
+    if (lesson.printed || printingLesson === lesson.lessonNumber) {
+      toast({
+        title: "Already Printed",
+        description: "This lesson receipt has already been printed.",
+        variant: "destructive"
+      });
+      return;
+    }
+    setPrintingLesson(lesson.lessonNumber);
+
+    // Prepare receipt content as before...
+    // ... receiptContent code ...
+
     const receiptWindow = window.open('', '_blank', 'width=400,height=600');
     if (!receiptWindow) {
       toast({
@@ -115,6 +128,7 @@ export default function StudentLessons() {
         description: "Please allow popups to print receipts.",
         variant: "destructive"
       });
+      setPrintingLesson(null);
       return;
     }
     const completionDate = lesson.date ? formatDate(lesson.date) : 'N/A';
@@ -166,6 +180,33 @@ export default function StudentLessons() {
     receiptWindow.document.open();
     receiptWindow.document.write(receiptContent);
     receiptWindow.document.close();
+
+    // Mark as printed in backend and refetch
+    try {
+      const updatedLessons = student.lessons.map(l =>
+        l.lessonNumber === lesson.lessonNumber
+          ? { ...l, printed: true }
+          : l
+      );
+      await apiRequest('PUT', `/api/students/phone/${student.phone}/lessons`, { lessons: updatedLessons });
+      // Refetch student from backend to get latest data
+      await queryClient.invalidateQueries({
+        queryKey: [`/api/students/phone/${student.phone}/lessons`]
+      });
+      toast({
+        title: "Receipt Printed",
+        description: `Lesson ${lesson.lessonNumber} receipt marked as printed.`,
+        variant: "default"
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Could not update print status.",
+        variant: "destructive"
+      });
+    } finally {
+      setPrintingLesson(null);
+    }
   };
 
   if (isLoading) {
@@ -246,7 +287,10 @@ export default function StudentLessons() {
                       <CardTitle className="text-lg">
                         Lesson {lessonNumber}: {LESSON_TITLES[lessonNumber] || ""}
                       </CardTitle>
-                      {lesson.completed && isVisible && (
+                      {lesson.completed && isVisible && lesson.printed && (
+                        <Badge variant="secondary" className="ml-2">Printed</Badge>
+                      )}
+                      {lesson.completed && isVisible && !lesson.printed && printingLesson !== lesson.lessonNumber && (
                         <Button
                           variant="ghost"
                           size="icon"
@@ -266,8 +310,13 @@ export default function StudentLessons() {
                           <Checkbox
                             id={`lesson-${lessonNumber}`}
                             checked={lesson.completed}
-                            disabled={savingLesson === lessonNumber}
-                            onCheckedChange={(checked) => toggleLessonCompletion(lessonNumber, checked === true)}
+                            disabled={savingLesson === lessonNumber || lesson.completed} // <-- disable if completed
+                            onCheckedChange={(checked) => {
+                              if (!lesson.completed && checked === true) {
+                                toggleLessonCompletion(lessonNumber, true);
+                              }
+                              // Do nothing if trying to uncheck
+                            }}
                           />
                           <label
                             htmlFor={`lesson-${lessonNumber}`}

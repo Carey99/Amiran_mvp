@@ -386,45 +386,22 @@ export const updateStudentLessonFlexible = async (req: Request, res: Response) =
 
 export const updateStudentLessons = async (req: Request, res: Response) => {
   try {
-    console.log('updateStudentLessons called');
     const { phone } = req.params;
-    const { lessons } = req.body;
+    let { lessons } = req.body;
 
     if (!phone || !lessons || !Array.isArray(lessons)) {
       return res.status(400).json({ message: 'Phone and lessons array are required' });
     }
 
-    // Fetch student by phone
+    // Remove _id from each lesson to force full replacement
+    lessons = lessons.map(({ _id, ...rest }) => rest);
+
     const student = await storage.getStudentByPhone(phone);
     if (!student) {
       return res.status(404).json({ message: 'Student not found' });
     }
 
-    // Find lessons just marked as completed
-    const justCompleted = lessons.filter(
-      l => l.completed && !student.lessons.find(sl => sl.lessonNumber === l.lessonNumber && sl.completed)
-    );
-
-    // Update lessons
     const updatedStudent = await storage.updateStudent(student._id.toString(), { lessons });
-
-    // Log activity for each newly completed lesson
-    for (const lesson of justCompleted) {
-      try {
-        const activity = await Activity.create({
-          type: 'lesson_completed',
-          title: 'Lesson Completed',
-          description: `${student.firstName} ${student.lastName} completed Lesson ${lesson.lessonNumber}`,
-          timestamp: new Date(),
-          icon: 'done', // <-- changed from 'check-circle' to 'done'
-          iconColor: '#22c55e',
-          iconBgColor: '#e7f9ef',
-        });
-        console.log('Activity created (lesson_completed):', activity);
-      } catch (err) {
-        console.error('Failed to create activity (lesson_completed):', err);
-      }
-    }
 
     res.status(200).json({
       message: 'Student lessons updated successfully',

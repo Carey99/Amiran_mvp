@@ -16,12 +16,13 @@ export interface IStudent extends Document {
     completed: boolean;
     instructor: Types.ObjectId;
     notes?: string;
+    printed?: boolean; // <-- Added this line
   }[];
   balance: number;
   totalPaid: number;
   courseFee: number;
   branch?: Types.ObjectId;
-  photoUrl?: string; // <-- Add this line
+  photoUrl?: string; // <-- Added this line
   createdAt: Date;
   updatedAt: Date;
 }
@@ -78,6 +79,10 @@ const studentSchema = new Schema<IStudent>(
         },
         notes: { 
           type: String 
+        },
+        printed: { 
+          type: Boolean, 
+          default: false // <-- Add this line
         }
       }
     ],

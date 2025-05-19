@@ -34,6 +34,7 @@ export interface Lesson {
   completed: boolean;
   instructor?: string;
   notes?: string;
+  printed?: boolean; // <-- added this
 }
 
 // Instructor related types

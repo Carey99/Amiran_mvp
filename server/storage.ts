@@ -202,7 +202,19 @@ export class MongoStorage implements IStorage {
 
   async deleteInstructor(id: string): Promise<IInstructor | null> {
     try {
-      return await Instructor.findByIdAndDelete(id).populate('userId');
+      // Find the instructor first to get the userId
+      const instructor = await Instructor.findById(id);
+      if (!instructor) return null;
+
+      // Delete the instructor
+      const deletedInstructor = await Instructor.findByIdAndDelete(id);
+
+      // Delete the associated user
+      if (instructor.userId) {
+        await User.findByIdAndDelete(instructor.userId);
+      }
+
+      return deletedInstructor;
     } catch (error) {
       console.error('Error deleting instructor:', error);
       throw error;

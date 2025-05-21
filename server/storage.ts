@@ -30,6 +30,7 @@ export interface IStorage {
   createInstructor(instructor: Partial<IInstructor>): Promise<IInstructor>;
   updateInstructor(id: string, data: Partial<IInstructor>): Promise<IInstructor | null>;
   deleteInstructor(id: string): Promise<IInstructor | null>;
+  getInstructorByUserId(userId: string): Promise<IInstructor | null>; // Add getInstructorByUserId method
   
   // Course operations
   getCourse(id: string): Promise<ICourse | null>;
@@ -55,6 +56,12 @@ export interface IStorage {
     instructors: number;
     revenue: number;
   }>;
+  getStatsByBranch(branchId: string): Promise<{ // Add getStatsByBranch method
+    totalStudents: number;
+    activeStudents: number;
+    instructors: number;
+    revenue: number;
+  }>;
 
   // Settings operations
   getSettings(): Promise<ISettings | null>;
@@ -62,6 +69,9 @@ export interface IStorage {
 
   // Activity operations
   getRecentActivities(): Promise<IActivity[]>;
+  getStudentsByBranch(branchId: string): Promise<IStudent[]>; // Add getStudentsByBranch method
+  getRecentActivitiesByBranch(branch: string): Promise<IActivity[]>; // Add getRecentActivitiesByBranch method
+  getActiveStudentsByBranch(branch: string): Promise<IStudent[]>; // Add getActiveStudentsByBranch method
 }
 
 // MongoDB Storage implementation
@@ -217,6 +227,16 @@ export class MongoStorage implements IStorage {
       return deletedInstructor;
     } catch (error) {
       console.error('Error deleting instructor:', error);
+      throw error;
+    }
+  }
+
+  // Find instructor by userId
+  async getInstructorByUserId(userId: string): Promise<IInstructor | null> {
+    try {
+      return await Instructor.findOne({ userId: new Types.ObjectId(userId) }).populate('userId');
+    } catch (error) {
+      console.error('Error getting instructor by userId:', error);
       throw error;
     }
   }
@@ -433,6 +453,46 @@ export class MongoStorage implements IStorage {
     }
   }
 
+  // Get stats by branch
+  async getStatsByBranch(branch: string): Promise<{
+    totalStudents: number;
+    activeStudents: number;
+    instructors: number;
+    revenue: number;
+  }> {
+    try {
+      const totalStudents = await Student.countDocuments({ branch });
+      const activeStudents = await Student.countDocuments({ branch, status: 'active' });
+      const instructors = await Instructor.countDocuments({ branch, active: true });
+
+      // Calculate total revenue from payments for students in this branch (current month)
+      const currentMonth = new Date();
+      const firstDay = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
+      const lastDay = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0, 23, 59, 59, 999);
+
+      // Find all students in this branch
+      const students = await Student.find({ branch }, { _id: 1 });
+      const studentIds = students.map(s => s._id);
+
+      const payments = await Payment.find({
+        studentId: { $in: studentIds },
+        paymentDate: { $gte: firstDay, $lte: lastDay }
+      });
+
+      const revenue = payments.reduce((total: number, payment: any) => total + payment.amount, 0);
+
+      return {
+        totalStudents,
+        activeStudents,
+        instructors,
+        revenue
+      };
+    } catch (error) {
+      console.error('Error getting stats by branch:', error);
+      throw error;
+    }
+  }
+
   // Fetch settings from the database
   async getSettings(): Promise<ISettings | null> {
     try {
@@ -468,6 +528,26 @@ export class MongoStorage implements IStorage {
       console.error('Error fetching recent activities:', error);
       throw error;
     }
+  }
+
+  // Get students by branch
+  async getStudentsByBranch(branch: string): Promise<IStudent[]> {
+    try {
+      return await Student.find({ branch }).populate('courseId');
+    } catch (error) {
+      console.error('Error getting students by branch:', error);
+      throw error;
+    }
+  }
+
+  // Get recent activities by branch
+  async getRecentActivitiesByBranch(branch: string): Promise<IActivity[]> {
+    return Activity.find({ branch }).sort({ createdAt: -1 }).limit(10);
+  }
+
+  // Get active students by branch
+  async getActiveStudentsByBranch(branch: string): Promise<IStudent[]> {
+    return Student.find({ branch, status: 'active' }).populate('courseId');
   }
 }
 

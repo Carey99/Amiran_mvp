@@ -24,6 +24,8 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Loader2, Menu, X } from "lucide-react";
 
+const branchOptions = ["Mwihoko", "Kahawa Sukari", "Kasarani"] as const;
+
 // Form schema with validation rules
 const applicationSchema = z.object({
   firstName: z.string().min(2, "First name must be at least 2 characters"),
@@ -32,6 +34,7 @@ const applicationSchema = z.object({
   phone: z.string().min(10, "Please enter a valid phone number"),
   idNumber: z.string().min(6, "ID number must be at least 6 characters"),
   courseId: z.string().min(1, "Please select a course"),
+  branch: z.enum(branchOptions, { required_error: "Please select a branch" }),
 });
 
 type FormData = z.infer<typeof applicationSchema>;
@@ -62,6 +65,7 @@ export default function Apply() {
       phone: "",
       idNumber: "",
       courseId: "",
+      branch: undefined, // added
     },
   });
 
@@ -331,6 +335,29 @@ export default function Apply() {
                       )}
                     />
                   </div>
+
+                  <FormField
+                    control={form.control}
+                    name="branch"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Branch</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a branch" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="Mwihoko">Mwihoko</SelectItem>
+                            <SelectItem value="Kahawa Sukari">Kahawa Sukari</SelectItem>
+                            <SelectItem value="Kasarani">Kasarani</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                   
                   <div className="pt-4">
                     <Button type="submit" className="w-full" disabled={isLoading}>

@@ -22,7 +22,7 @@ interface InstructorFormData {
   email: string;
   phone: string;
   specialization: string[];
-  branch?: string;
+  branch: string; // <-- required
   active: boolean;
 }
 
@@ -38,6 +38,7 @@ export default function Instructors() {
     email: '',
     phone: '',
     specialization: ['automatic'],
+    branch: '', // <-- force selection
     active: true
   });
   const [editingInstructor, setEditingInstructor] = useState<Instructor | null>(null);
@@ -65,6 +66,10 @@ export default function Instructors() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData.branch) {
+      toast({ title: 'Error', description: 'Please select a branch.', variant: 'destructive' });
+      return;
+    }
     try {
       if (editingInstructor) {
         const updated = await apiRequest('PUT', `/api/instructors/${editingInstructor._id}`, { ...formData });
@@ -103,6 +108,7 @@ export default function Instructors() {
         email: '',
         phone: '',
         specialization: ['automatic'],
+        branch: '',
         active: true
       });
       setEditingInstructor(null);
@@ -330,6 +336,25 @@ export default function Instructors() {
                       </label>
                     </div>
                   </div>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="branch">Branch <span className="text-red-500">*</span></Label>
+                  <Select
+                    value={formData.branch}
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, branch: value }))}
+                  >
+                    <SelectTrigger id="branch">
+                      <SelectValue placeholder="Select a branch" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Mwihoko">Mwihoko</SelectItem>
+                      <SelectItem value="Kahawa Sukari">Kahawa Sukari</SelectItem>
+                      <SelectItem value="Kasarani">Kasarani</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {formData.branch === '' && (
+                    <span className="text-xs text-red-500">Please select a branch</span>
+                  )}
                 </div>
                 <div className="flex items-center space-x-2">
                   <Checkbox 

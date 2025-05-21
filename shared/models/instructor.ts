@@ -13,7 +13,7 @@ export interface IInstructor extends Document {
     }[];
   }[];
   rating?: number;
-  branch?: Types.ObjectId;
+  branch: string; // <-- required and string
   active: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -49,9 +49,10 @@ const instructorSchema = new Schema<IInstructor>(
       min: 0,
       max: 5
     },
-    branch: { 
-      type: Schema.Types.ObjectId,
-      ref: 'Branch'
+    branch: {
+      type: String,
+      required: true,
+      enum: ['Mwihoko', 'Kahawa Sukari', 'Kasarani']
     },
     active: { 
       type: Boolean, 

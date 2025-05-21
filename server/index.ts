@@ -1,5 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
 import 'dotenv/config'; // Initialize dotenv to load environment variables
+import session from 'express-session';
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { seedAdminUser } from "./seed";
@@ -8,6 +9,18 @@ import { connectToMongoDB } from "../shared/db";
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Add this before your routes
+app.use(session({
+  secret: process.env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production', // true in production, false otherwise
+    sameSite: 'lax', // recommended for most apps
+    httpOnly: true   // helps prevent XSS
+  }
+}));
 
 app.use((req, res, next) => {
   const start = Date.now();

@@ -1,36 +1,32 @@
 import { Request, Response, NextFunction } from 'express';
+import { storage } from '../storage'; // Adjust path if needed
 import { User } from '../../shared/models/user';
 
 // Authentication middleware
 export const authMiddleware = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    // For our simple implementation, we'll check if the user exists
-    // In a real application, this would check session tokens, JWT, etc.
-    
-    // Get the authorization header
-    const authHeader = req.headers.authorization;
-    
-    if (!authHeader) {
+    // Use session-based authentication
+    const userId = req.session?.userId;
+    if (!userId) {
       return res.status(401).json({ message: 'Authentication required' });
     }
-    
-    // Extract userId (this would typically be a token)
-    const userId = authHeader.split(' ')[1];
-    
-    if (!userId) {
-      return res.status(401).json({ message: 'Invalid authentication format' });
-    }
-    
+
     // Find the user in the database
-    const user = await User.findById(userId);
-    
+    const user = await storage.getUser(userId);
     if (!user) {
       return res.status(401).json({ message: 'User not found' });
     }
-    
-    // Attach user to request for downstream middleware and routes
-    (req as any).user = user;
-    
+
+    // Attach branch if instructor or branch_admin
+    let branch = null;
+    if (user.role === 'instructor' || user.role === 'super_admin') {
+      const instructor = await storage.getInstructorByUserId(user.id);
+      branch = instructor?.branch || null;
+    }
+
+    // Attach user and branch to request for downstream middleware and routes
+    (req as any).user = { ...user.toObject(), branch };
+
     next();
   } catch (error) {
     console.error('Authentication error:', error);

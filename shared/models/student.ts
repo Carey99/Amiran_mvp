@@ -21,7 +21,7 @@ export interface IStudent extends Document {
   balance: number;
   totalPaid: number;
   courseFee: number;
-  branch?: Types.ObjectId;
+  branch: string; // <-- required and string
   photoUrl?: string; // <-- Added this line
   createdAt: Date;
   updatedAt: Date;
@@ -99,8 +99,9 @@ const studentSchema = new Schema<IStudent>(
       required: true 
     },
     branch: { 
-      type: Schema.Types.ObjectId, 
-      ref: 'Branch' 
+      type: String,
+      required: true,
+      enum: ['Mwihoko', 'Kahawa Sukari', 'Kasarani']
     },
     photoUrl: { 
       type: String, 

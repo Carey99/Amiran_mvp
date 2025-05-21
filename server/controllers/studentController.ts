@@ -56,7 +56,7 @@ export const registerStudent = async (req: Request, res: Response) => {
       balance: course.fee,
       totalPaid: 0,
       courseFee: course.fee,
-      branch: branch ? new Types.ObjectId(branch) : undefined,
+      branch, // pass the string directly nolonger an objectId
     });
     
     // Log successful student registration

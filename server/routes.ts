@@ -17,6 +17,20 @@ import { authMiddleware } from './middlewares/auth';
 //import { requireRole } from './middlewares/role';
 import { checkRole } from './middlewares/auth';
 import multer from 'multer';
+import 'express-session';
+import 'express';
+
+declare module 'express' {
+  interface Request {
+    user?: any; // Or a more specific type if you have one
+  }
+}
+
+declare module 'express-session' {
+  interface SessionData {
+    userId?: string;
+  }
+}
 
 const upload = multer({ dest: 'uploads/' }); // or configure as needed
 
@@ -48,8 +62,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/students/register", studentController.registerStudent);
 
   // Student controller routes
-  app.get("/api/students", studentController.getAllStudents);
-  app.get("/api/students/active", studentController.getActiveStudents);
+  //app.get("/api/students", studentController.getAllStudents);
+  app.get("/api/students/active", authMiddleware, async (req, res) => {
+    try {
+      const user = req.user;
+      let students;
+      if (user.role === 'super_admin') {
+        students = await storage.getActiveStudents();
+      } else if (user.role === 'instructor' || user.role === 'branch_admin') {
+        students = await storage.getActiveStudentsByBranch(user.branch);
+      } else {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+      res.json(students);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching active students", error: (error as Error).message });
+    }
+  });
   app.get("/api/students/finished", studentController.getFinishedStudents);
   app.get("/api/students/search", studentController.searchStudents);
   app.get("/api/students/:id", studentController.getStudentById);
@@ -73,7 +102,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // For the admin user created with the seed, we need special handling
-      // since it might have been created with direct password assignment
+      // since it was created with direct password assignment
       let isPasswordValid = false;
 
       if (user.password.includes('.')) {
@@ -88,13 +117,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Invalid username or password" });
       }
 
+      // Fetch instructor record if role is instructor or branch_admin
+      let branch = null;
+      if (user.role === 'instructor') {
+        const instructor = await storage.getInstructorByUserId(user.id);
+        branch = instructor?.branch || null;
+      }
+
+      // Set the session userId here
+      req.session.userId = user.id;
+      
       // Session setup would go here in a real application
       res.json({
         id: user.id,
         username: user.username,
         role: user.role,
         firstName: user.firstName,
-        lastName: user.lastName
+        lastName: user.lastName,
+        branch, // include branch
       });
 
     } catch (error) {
@@ -106,14 +146,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Session validity check endpoint
   app.get("/api/auth/check-session", async (req, res) => {
     try {
-      // This is a simple check - in a real application, you would validate
-      // a session token or JWT. For now, we'll just return success.
-      // For demonstration purposes only.
-
-      // In a production environment, you would:
       // 1. Extract session token/JWT from headers
       // 2. Verify the token validity
-      // 3. Check user permissions if needed
+      // 3. Check user permissions
 
       res.status(200).json({ valid: true });
     } catch (error) {
@@ -195,12 +230,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Student routes
-  app.get("/api/students", async (req, res) => {
-    try {
+  app.get("/api/students", authMiddleware, async (req, res) => {
+    const user = req.user;
+    console.log('User:', user);
+    if (user.role === 'super_admin') {
+      // Return all students
       const students = await storage.getStudents();
-      res.json(students);
-    } catch (error) {
-      res.status(500).json({ message: "Error fetching students", error: (error as Error).message });
+      return res.json(students);
+    } else if (user.role === 'instructor') {
+      // Return only students for this instructor's branch
+      const students = await storage.getStudentsByBranch(user.branch);
+      return res.json(students);
+    } else {
+      // Optionally handle admin/branch_admin
+      return res.status(403).json({ message: "Forbidden" });
     }
   });
 
@@ -235,7 +278,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const student = await storage.createStudent({
           ...studentData,
           courseId: new Types.ObjectId(studentData.courseId as string),
-          branch: studentData.branch ? new Types.ObjectId(studentData.branch as string) : undefined
+          branch: studentData.branch, // Pass the branch directly
         });
 
         // Log success for debugging
@@ -263,7 +306,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         studentData.courseId = new Types.ObjectId(studentData.courseId);
       }
       if (studentData.branch) {
-        studentData.branch = new Types.ObjectId(studentData.branch);
+        //studentData.branch = new Types.ObjectId(studentData.branch);
       }
 
       const updatedStudent = await storage.updateStudent(req.params.id, studentData);
@@ -399,10 +442,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const instructorData = {
         ...instructorFields,
         userId,
-        branch:
-          instructorFields.branch && typeof instructorFields.branch === "string"
-            ? new Types.ObjectId(instructorFields.branch) // Convert string to ObjectId
-            : instructorFields.branch,
+        branch: instructorFields.branch, // just pass the string directly
       };
 
       // Validate instructor data and pass the final ObjectId values
@@ -411,8 +451,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Ensure TypeScript compliance for `userId` and `branch`
       validatedData.userId = new Types.ObjectId(validatedData.userId as string);
-      if (validatedData.branch)
-        validatedData.branch = new Types.ObjectId(validatedData.branch as string);
+     
 
       // Create the instructor in the database
       const instructor = await storage.createInstructor(validatedData);
@@ -528,12 +567,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/payments', async (req, res) => {
+  app.get('/api/payments', authMiddleware, async (req, res) => {
     try {
       const { startDate, endDate, page = 1, limit = 50 } = req.query;
+      const user = req.user;
   
       // Build the query object for filtering by date
       const query: any = {};
+  
+      // Branch filtering
+      if (user.role === 'instructor' || user.role === 'branch_admin') {
+        if (!user.branch) {
+          return res.status(403).json({ message: "Branch not specified for user" });
+        }
+        // Find all students in this branch
+        const students = await storage.getStudentsByBranch(user.branch);
+        const studentIds = students.map(s => s._id);
+        query.studentId = { $in: studentIds };
+      } else if (user.role !== 'super_admin') {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+  
+      // Date filtering
       if (startDate && endDate) {
         query.paymentDate = {
           $gte: new Date(startDate as string),
@@ -545,15 +600,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
       // Fetch payments with pagination
       const payments = await Payment.find(query)
-        .populate('studentId', 'firstName lastName') // Populate student details
-        .sort({ paymentDate: -1 }) // Sort by most recent payments
-        .skip((+page - 1) * +limit) // Skip for pagination
-        .limit(+limit); // Limit the number of results
+        .populate('studentId', 'firstName lastName')
+        .sort({ paymentDate: -1 })
+        .skip((+page - 1) * +limit)
+        .limit(+limit);
   
-      // Get the total count of payments matching the query
-      const total = await Payment.countDocuments(query); // Use the model directly
+      const total = await Payment.countDocuments(query);
   
-      // Respond with payments and total count
       res.json({ payments, total });
     } catch (error) {
       console.error('Error fetching payments:', error);
@@ -653,9 +706,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Stats route
-  app.get("/api/stats", async (req, res) => {
+  app.get("/api/stats", authMiddleware, async (req, res) => {
     try {
-      const stats = await storage.getStats();
+      const user = req.user;
+      let stats;
+      if (user.role === 'super_admin') {
+        stats = await storage.getStats();
+      } else if (user.role === 'instructor' || user.role === 'branch_admin') {
+        if (!user.branch) {
+          return res.status(403).json({ message: "Branch not specified for user" });
+        }
+        stats = await storage.getStatsByBranch(user.branch);
+      } else {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
       res.json(stats);
     } catch (error) {
       res.status(500).json({ message: "Error fetching stats", error: (error as Error).message });
@@ -663,12 +727,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Recent activities route
-  app.get("/api/activities/recent", async (req, res) => {
+  app.get("/api/activities/recent", authMiddleware, async (req, res) => {
     try {
-      const activities = await storage.getRecentActivities(); // Fetch from the database
+      const user = req.user;
+      let activities;
+      if (user.role === 'super_admin') {
+        activities = await storage.getRecentActivities();
+      } else if (user.role === 'instructor' || user.role === 'branch_admin') {
+        activities = await storage.getRecentActivitiesByBranch(user.branch);
+      } else {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
       res.json(activities);
     } catch (error) {
-      console.error("Error fetching recent activities:", error);
       res.status(500).json({ message: "Error fetching recent activities", error: (error as Error).message });
     }
   });

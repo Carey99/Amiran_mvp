@@ -14,6 +14,9 @@ export * from './models/activity'; // Commented out because 'activity.ts' is not
 // Helper to allow both string and ObjectId types
 const objectIdSchema = z.union([z.string(), z.instanceof(Types.ObjectId)]);
 
+// Define allowed branches as a constant
+export const branchOptions = ['Mwihoko', 'Kahawa Sukari', 'Kasarani'] as const;
+
 // Create Zod validation schemas for input data
 
 // User validation schema
@@ -39,7 +42,7 @@ export const studentSchema = z.object({
   balance: z.number().default(0),
   totalPaid: z.number().default(0),
   courseFee: z.number(),
-  branch: objectIdSchema.optional() // Allow string or ObjectId
+  branch: z.enum(branchOptions, { required_error: "Please select a branch" }), // <-- required and restricted
 });
 
 // Course validation schema
@@ -90,6 +93,6 @@ export const branchSchema = z.object({
 export const instructorSchema = z.object({
   userId: objectIdSchema, // Allow string or ObjectId
   specialization: z.array(z.string()),
-  branch: objectIdSchema.optional(), // Allow string or ObjectId
+  branch: z.enum(branchOptions, { required_error: "Please select a branch" }), // <-- required and restricted
   active: z.boolean().default(true)
 });

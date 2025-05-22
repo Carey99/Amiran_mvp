@@ -1,20 +1,29 @@
 import express, { type Request, Response, NextFunction } from "express";
 import 'dotenv/config'; // Initialize dotenv to load environment variables
 import session from 'express-session';
+import cors from "cors";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { seedAdminUser } from "./seed";
 import { connectToMongoDB } from "../shared/db";
+import MongoStore from 'connect-mongo';
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+app.use(cors({
+  origin: "https://amirandrivingcollege.co.ke", //frontend domain
+  credentials: true
+}));
+
 // Add this before your routes
 app.use(session({
+  name: "auth_session",
   secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
+  store: MongoStore.create({ mongoUrl: process.env.MONGODB_URI }),
   cookie: {
     secure: process.env.NODE_ENV === 'production', // true in production, false otherwise
     sameSite: 'lax', // recommended for most apps

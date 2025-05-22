@@ -21,233 +21,166 @@ interface LoginResponse {
   email?: string;
 }
 
-// Define the session timeout in milliseconds (30 minutes)
 const SESSION_TIMEOUT = 30 * 60 * 1000;
-
-// Define token validity check interval (every 5 minutes)
 const TOKEN_CHECK_INTERVAL = 5 * 60 * 1000;
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Helper function to set cookies with expiration
-function setCookie(name: string, value: string, expirationMs: number) {
-  const date = new Date();
-  date.setTime(date.getTime() + expirationMs);
-  const expires = `expires=${date.toUTCString()}`;
-  document.cookie = `${name}=${value};${expires};path=/`;
-}
-
-// Helper function to get cookie value
-function getCookie(name: string): string | null {
-  const cookieName = `${name}=`;
-  const cookies = document.cookie.split(';');
-  
-  for (let i = 0; i < cookies.length; i++) {
-    let cookie = cookies[i].trim();
-    if (cookie.indexOf(cookieName) === 0) {
-      return cookie.substring(cookieName.length, cookie.length);
-    }
-  }
-  return null;
-}
-
-// Helper function to delete cookie
-function deleteCookie(name: string) {
-  document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
-}
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [isLoading, setIsLoading] = useState<boolean>(true); // Start with loading true
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [_, setLocation] = useLocation();
   const [sessionTimeout, setSessionTimeout] = useState<NodeJS.Timeout | null>(null);
 
   // Function to reset the session timeout
   const resetSessionTimeout = useCallback(() => {
-    // Clear any existing timeout
-    if (sessionTimeout) {
-      clearTimeout(sessionTimeout);
-    }
-    
-    // Set a new timeout that will log the user out after the session period
-    const timeoutId = setTimeout(() => {
-      console.log("Session expired due to inactivity");
-      // Use a direct function instead of calling logout to avoid the circular dependency
-      setUser(null);
-      setIsAuthenticated(false);
-      localStorage.removeItem("user");
-      deleteCookie("auth_session");
-      setLocation("/auth/login");
-    }, SESSION_TIMEOUT);
-    
-    setSessionTimeout(timeoutId);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Remove the dependency to prevent infinite loop
+    setSessionTimeout(prevTimeout => {
+      if (prevTimeout) clearTimeout(prevTimeout);
+      return setTimeout(() => {
+        setUser(null);
+        setIsAuthenticated(false);
+        setLocation("/auth/login");
+      }, SESSION_TIMEOUT);
+    });
+  }, [setLocation]);
 
   // Check for authentication on mount
   useEffect(() => {
     let isMounted = true;
-    
-    const checkAuth = () => {
-      // First, try to get auth from cookie for faster loading
-      const authCookie = getCookie("auth_session");
-      
-      if (authCookie && isMounted) {
-        try {
-          const parsedUser = JSON.parse(authCookie);
-          setUser(parsedUser);
-          setIsAuthenticated(true);
-          resetSessionTimeout();
-          setIsLoading(false);
-          return;
-        } catch (error) {
-          console.error("Error parsing auth cookie:", error);
-          deleteCookie("auth_session");
+
+    const checkAuth = async () => {
+      try {
+        const response = await fetch('/api/auth/check-session', {
+          method: 'GET',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        if (response.ok) {
+          const userData: LoginResponse = await response.json();
+          if (isMounted) {
+            setUser({
+              id: userData.id,
+              username: userData.username,
+              role: userData.role,
+              firstName: userData.firstName || '',
+              lastName: userData.lastName || '',
+              email: userData.email || '',
+            });
+            setIsAuthenticated(true);
+            resetSessionTimeout();
+          }
+        } else {
+          if (isMounted) {
+            setUser(null);
+            setIsAuthenticated(false);
+          }
         }
-      }
-      
-      // Fallback to localStorage
-      const storedUser = localStorage.getItem("user");
-      if (storedUser && isMounted) {
-        try {
-          const parsedUser = JSON.parse(storedUser);
-          setUser(parsedUser);
-          setIsAuthenticated(true);
-          // Also set the cookie for faster future loads
-          setCookie("auth_session", storedUser, SESSION_TIMEOUT);
-          resetSessionTimeout();
-        } catch (error) {
-          console.error("Error parsing stored user data:", error);
-          localStorage.removeItem("user");
+      } catch {
+        if (isMounted) {
+          setUser(null);
+          setIsAuthenticated(false);
         }
-      }
-      
-      if (isMounted) {
-        setIsLoading(false);
+      } finally {
+        if (isMounted) setIsLoading(false);
       }
     };
-    
+
     checkAuth();
-    
-    // Cleanup function
+
     return () => {
       isMounted = false;
       if (sessionTimeout) {
         clearTimeout(sessionTimeout);
       }
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-  
+  }, []); // <--- Only on mount
+
   // Set up activity listeners to reset session timeout
   useEffect(() => {
     if (!isAuthenticated) return;
-    
-    // Activity events that should reset the session timeout
+
     const activityEvents = [
-      'mousedown', 'mousemove', 'keypress', 
+      'mousedown', 'mousemove', 'keypress',
       'scroll', 'touchstart', 'click'
     ];
-    
+
     const handleActivity = () => {
       resetSessionTimeout();
     };
-    
-    // Add event listeners
+
     activityEvents.forEach(event => {
       document.addEventListener(event, handleActivity);
     });
-    
-    // Remove event listeners on cleanup
+
     return () => {
       activityEvents.forEach(event => {
         document.removeEventListener(event, handleActivity);
       });
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated]); // Only re-run when authentication status changes
+  }, [isAuthenticated, resetSessionTimeout]);
 
   // Set up periodic token validity check
   useEffect(() => {
     if (!isAuthenticated) return;
-    
+
     const checkSessionValidity = async () => {
       try {
         const response = await fetch('/api/auth/check-session', {
           method: 'GET',
-          headers: {
-            'Content-Type': 'application/json'
-          }
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' }
         });
-        
         if (!response.ok) {
-          // Session is invalid, log out user
-          console.log("Session is no longer valid, logging out");
           if (sessionTimeout) {
             clearTimeout(sessionTimeout);
             setSessionTimeout(null);
           }
-          
           setUser(null);
           setIsAuthenticated(false);
-          localStorage.removeItem("user");
-          deleteCookie("auth_session");
           setLocation("/auth/login?session=expired");
         } else {
-          // Session is valid, reset timeout
           resetSessionTimeout();
         }
-      } catch (error) {
-        // On error, we'll be conservative and invalidate the session
-        console.error("Error checking session validity:", error);
+      } catch {
         if (sessionTimeout) {
           clearTimeout(sessionTimeout);
           setSessionTimeout(null);
         }
-        
         setUser(null);
         setIsAuthenticated(false);
-        localStorage.removeItem("user");
-        deleteCookie("auth_session");
         setLocation("/auth/login?session=error");
       }
     };
-    
-    // Run check immediately on mount if authenticated
+
     checkSessionValidity();
-    
-    // Set up interval for periodic checks
     const intervalId = setInterval(checkSessionValidity, TOKEN_CHECK_INTERVAL);
-    
-    // Clean up on unmount
+
     return () => {
       clearInterval(intervalId);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated]); // Only re-run when authentication status changes
+  }, [isAuthenticated, setLocation]);
 
   const login = async (username: string, password: string): Promise<boolean> => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const response = await fetch('/api/auth/login', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Login failed');
       }
-      
+
       const userData: LoginResponse = await response.json();
-      
+
       const user: User = {
         id: userData.id,
         username: userData.username,
@@ -256,19 +189,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         lastName: userData.lastName || '',
         email: userData.email || '',
       };
-      
+
       setUser(user);
       setIsAuthenticated(true);
-      
-      // Store user data in both localStorage and cookies
-      const userJSON = JSON.stringify(user);
-      localStorage.setItem("user", userJSON);
-      setCookie("auth_session", userJSON, SESSION_TIMEOUT);
-      
-      // Reset the session timeout
       resetSessionTimeout();
-      
-      // Show a success message
+
       console.log(`Login successful for ${user.firstName || user.username}`);
       return true;
     } catch (error: any) {
@@ -280,26 +205,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(false);
     }
   };
-  
+
   const signup = async (userData: Omit<User, "id">): Promise<boolean> => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const response = await fetch('/api/auth/signup', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(userData),
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Signup failed');
       }
-      
-      // Show success message
+
       console.log("Registration successful");
       return true;
     } catch (error: any) {
@@ -313,35 +235,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = () => {
-    // Optional: Call logout API
-    fetch('/api/auth/logout', { method: 'POST' })
+    fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
       .catch(err => console.error("Logout API error:", err));
-    
-    // Clear the session timeout
+
     if (sessionTimeout) {
       clearTimeout(sessionTimeout);
       setSessionTimeout(null);
     }
-    
-    // Clear all authentication data
+
     setUser(null);
     setIsAuthenticated(false);
-    localStorage.removeItem("user");
-    deleteCookie("auth_session");
-    
-    // Redirect to login page
     setLocation("/auth/login");
-    
-    // Show logout message
     console.log("User logged out successfully");
   };
 
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      isAuthenticated, 
+    <AuthContext.Provider value={{
+      user,
+      isAuthenticated,
       isLoading,
-      login, 
+      login,
       signup,
       logout,
       error

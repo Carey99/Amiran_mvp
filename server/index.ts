@@ -17,7 +17,6 @@ app.use(cors({
   credentials: true
 }));
 
-// Add this before your routes
 app.use(session({
   name: "auth_session",
   secret: process.env.SESSION_SECRET,

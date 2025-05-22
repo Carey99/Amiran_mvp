@@ -26,7 +26,7 @@ app.use(session({
   store: MongoStore.create({ mongoUrl: process.env.MONGODB_URI }),
   cookie: {
     secure: process.env.NODE_ENV === 'production', // true in production, false otherwise
-    sameSite: 'lax', // recommended for most apps
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // not recommended though
     httpOnly: true   // helps prevent XSS
   }
 }));

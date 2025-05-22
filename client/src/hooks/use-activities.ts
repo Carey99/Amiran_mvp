@@ -5,7 +5,7 @@ export function useRecentActivities() {
   return useQuery<Activity[]>({
     queryKey: ['/api/activities/recent'],
     queryFn: async () => {
-      const res = await fetch('/api/activities/recent');
+      const res = await fetch('/api/activities/recent', { credentials: 'include' });
       if (!res.ok) throw new Error('Failed to fetch activities');
       return res.json();
     },

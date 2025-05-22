@@ -144,19 +144,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Session validity check endpoint
-  app.get("/api/auth/check-session", async (req, res) => {
-    try {
-      // 1. Extract session token/JWT from headers
-      // 2. Verify the token validity
-      // 3. Check user permissions
-
-      res.status(200).json({ valid: true });
-    } catch (error) {
-      console.error("Session check error:", error);
-      res.status(401).json({ 
-        valid: false, 
-        message: "Session invalid or expired" 
-      });
+  app.get("/api/auth/check-session", (req, res) => {
+    if (req.session && req.session.userId) {
+      res.status(200).json({ valid: true, userId: req.session.userId });
+    } else {
+      res.status(401).json({ valid: false });
     }
   });
 
@@ -195,6 +187,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.status(500).json({ message: "Error creating user", error: (error as Error).message });
     }
+  });
+
+  app.post("/api/auth/logout", (req, res) => {
+    req.session.destroy(err => {
+      if (err) {
+        return res.status(500).json({ message: "Logout failed" });
+      }
+      // Clear the session cookie
+      res.clearCookie("auth_session", {
+        path: "/",
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax"
+      });
+      res.json({ message: "Logged out" });
+    });
   });
 
   // User routes

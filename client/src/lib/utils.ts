@@ -36,6 +36,7 @@ export const apiRequest = async (
     headers: {
       'Content-Type': 'application/json',
     },
+    credentials: 'include', // <-- Always included!
     ...(data && { body: JSON.stringify(data) }),
   };
 

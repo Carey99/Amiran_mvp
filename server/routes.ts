@@ -624,12 +624,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.post("/api/payments", async (req, res) => {
     try {
-      // Parse and validate the incoming payment data
+      // Parse and validate the incoming payment data, including transactionId
       const paymentData = paymentSchema.parse({
         studentId: req.body.studentId,
         amount: req.body.amount,
         paymentMethod: req.body.paymentMethod,
-        paymentDate: req.body.paymentDate || new Date(), // Default to current date if not provided
+        transactionId: req.body.transactionId, // <-- include this line
+        paymentDate: req.body.paymentDate || new Date(),
       });
 
       // Convert string IDs to ObjectIds
@@ -639,8 +640,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Create the payment in the database
       const payment = await storage.createPayment(paymentData as Partial<IPayment>);
-      console.log('Created payment:', payment); // Log the payment object
-      res.status(201).json({ id: payment._id, ...payment.toObject() }); // Explicitly include the `id`
+      res.status(201).json({ id: payment._id, ...payment.toObject() });
     } catch (error) {
       console.error('Error creating payment:', error);
       if (error instanceof ZodError) {

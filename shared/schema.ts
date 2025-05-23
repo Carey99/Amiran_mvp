@@ -69,13 +69,14 @@ export const courseSchema = z.object({
 
 // Payment validation schema
 export const paymentSchema = z.object({
-  studentId: objectIdSchema, // Validate that studentId is a string or ObjectId
-  amount: z.number().positive(), // Ensure amount is a positive number
-  paymentMethod: z.enum(['mpesa', 'cash', 'bank', 'other']), // Restrict to allowed payment methods
+  studentId: objectIdSchema,
+  amount: z.number().positive(),
+  paymentMethod: z.enum(['mpesa', 'cash', 'bank', 'other']),
+  transactionId: z.string().length(10), // <-- Add this line
   paymentDate: z
     .union([z.string(), z.date()])
     .optional()
-    .transform((value) => (typeof value === 'string' ? new Date(value) : value)), // Convert strings to Date objects
+    .transform((value) => (typeof value === 'string' ? new Date(value) : value)),
 });
 
 // Branch validation schema

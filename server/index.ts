@@ -25,7 +25,10 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 app.use(cors({
-  origin: "https://amirandrivingcollege.co.ke", //frontend domain
+  origin: [
+    "https://amirandrivingcollege.co.ke",
+    "https://www.amirandrivingcollege.co.ke"
+  ],
   credentials: true
 }));
 
@@ -38,7 +41,8 @@ app.use(session({
   cookie: {
     secure: process.env.NODE_ENV === 'production', // true in production, false otherwise
     sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // not recommended though
-    httpOnly: true   // helps prevent XSS
+    httpOnly: true,   // helps prevent XSS
+    domain: process.env.NODE_ENV === 'production' ? '.amirandrivingcollege.co.ke' : undefined // <--- add this line
   }
 }));
 

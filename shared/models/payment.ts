@@ -36,7 +36,10 @@ const paymentSchema = new Schema<IPayment>(
       required: true 
     },
     transactionId: { 
-      type: String 
+      type: String, 
+      required: true, 
+      unique: true, 
+      length: 10 
     },
     paymentDate: { 
       type: Date, 

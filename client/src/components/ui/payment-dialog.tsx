@@ -15,6 +15,7 @@ interface PaymentDialogProps {
 
 export function PaymentDialog({ student, isOpen, onClose }: PaymentDialogProps) {
   const [amount, setAmount] = useState(""); // State for the payment amount
+  const [transactionId, setTransactionId] = useState(""); // State for the transaction ID
   const [isSubmitting, setIsSubmitting] = useState(false); // Tracks form submission state
   const { toast } = useToast(); // Hook for displaying toast notifications
   const queryClient = useQueryClient(); // React Query client for invalidating queries
@@ -30,6 +31,7 @@ export function PaymentDialog({ student, isOpen, onClose }: PaymentDialogProps) 
         studentId: student.id,
         amount: parseFloat(amount),
         paymentMethod: 'cash',
+        transactionId, // Include transaction ID in the request
       });
       console.log('Payment response:', payment); // Log the response from the backend
       
@@ -81,6 +83,19 @@ export function PaymentDialog({ student, isOpen, onClose }: PaymentDialogProps) 
               onChange={(e) => setAmount(e.target.value)}
               required
               min="0"
+            />
+          </div>
+          {/* Transaction ID Input */}
+          <div>
+            <label htmlFor="transactionId" className="text-sm font-medium">Transaction Code</label>
+            <Input
+              id="transactionId"
+              name="transactionId"
+              type="text"
+              maxLength={10}
+              required
+              value={transactionId}
+              onChange={(e) => setTransactionId(e.target.value)}
             />
           </div>
           {/* Action Buttons */}

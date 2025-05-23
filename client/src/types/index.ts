@@ -82,7 +82,7 @@ export interface Payment {
   studentId: Student | string;
   amount: number;
   paymentMethod: 'mpesa' | 'cash' | 'bank' | 'other';
-  transactionId?: string;
+  transactionId: string; //  required
   paymentDate: string;
   lessonCovered?: number;
   notes?: string;

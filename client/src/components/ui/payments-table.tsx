@@ -29,6 +29,7 @@ export function PaymentsTable({ payments, isLoading }: PaymentsTableProps) {
   // Export filtered payments to an Excel file
   const exportToExcel = () => {
     const data = filteredPayments.map(payment => ({
+      'Transaction Code': payment.transactionId, //transactiionId
       'Student Name': `${payment.studentId?.firstName} ${payment.studentId?.lastName}`,
       'Amount': payment.amount,
       'Date': formatDate(payment.paymentDate),
@@ -78,6 +79,7 @@ export function PaymentsTable({ payments, isLoading }: PaymentsTableProps) {
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead>Transaction Code</TableHead>
             <TableHead>Student Name</TableHead>
             <TableHead>Amount</TableHead>
             <TableHead>Date</TableHead>
@@ -87,6 +89,7 @@ export function PaymentsTable({ payments, isLoading }: PaymentsTableProps) {
         <TableBody>
           {filteredPayments.map((payment, index) => (
             <TableRow key={payment._id || index}>
+              <TableCell>{payment.transactionId}</TableCell>
               <TableCell>{payment.studentId?.firstName} {payment.studentId?.lastName}</TableCell>
               <TableCell>{formatCurrency(payment.amount)}</TableCell>
               <TableCell>{formatDate(payment.paymentDate)}</TableCell>

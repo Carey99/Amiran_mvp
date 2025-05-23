@@ -71,6 +71,7 @@ export default function Signup() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(userData),
+        credentials: "include", //for session cookie
       });
       
       if (response.ok) {

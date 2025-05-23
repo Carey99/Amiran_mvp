@@ -91,6 +91,7 @@ export default function Students() {
         const res = await fetch(`/api/students/${selectedStudent.id}/photo`, {
           method: 'POST',
           body: formData,
+          credentials: 'include', // <-- Add this line
           // Add Authorization header if needed
         });
         if (!res.ok) throw new Error('Upload failed');

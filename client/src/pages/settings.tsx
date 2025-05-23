@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
+axios.defaults.withCredentials = true;
 import { AppLayout } from "@/layouts/app-layout";
 
 export default function Settings() {

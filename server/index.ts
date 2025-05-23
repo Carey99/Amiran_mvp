@@ -32,6 +32,7 @@ app.use(cors({
   credentials: true
 }));
 
+app.set('trust proxy', 1); //trusting render proxy for secure cookies
 app.use(session({
   name: "auth_session",
   secret: process.env.SESSION_SECRET,

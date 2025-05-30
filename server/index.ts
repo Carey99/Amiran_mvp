@@ -32,6 +32,13 @@ app.use(cors({
   credentials: true
 }));
 
+app.use((req: Request, res: Response, next: NextFunction) => {
+  if (process.env.PAUSED === 'true') {
+    return res.status(503).json({ message: "🚫 Service unavailable" });
+  }
+  next();
+});
+
 app.set('trust proxy', 1); //trusting render proxy for secure cookies
 app.use(session({
   name: "auth_session",

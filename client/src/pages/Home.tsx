@@ -4,6 +4,19 @@ import { Button } from "@/components/ui/button";
 import { ChevronRight, Award, Clock, Users, BookOpen, Shield, Menu, X } from "lucide-react";
 import { FaFacebookF, FaInstagram, FaWhatsapp } from "react-icons/fa";
 
+const galleryImages = [
+  "/images/IMG-20250511-WA0016.jpg",
+  "/images/IMG-20250511-WA0007.jpg",
+  "/images/IMG-20250511-WA0009.jpg",
+  "/images/IMG-20250511-WA0010.jpg",
+  "/images/IMG-20250511-WA0011.jpg",
+  "/images/IMG-20250511-WA0012.jpg",
+  "/images/IMG-20250511-WA0013.jpg",
+  "/images/IMG-20250511-WA0014.jpg",
+  "/images/IMG-20250511-WA0015.jpg",
+  "/images/IMG-20250511-WA0006.jpg",
+];
+
 export default function Home() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -261,6 +274,17 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Gallery Section */}
+      <section className="py-16 bg-gradient-to-b from-white to-gray-100">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl font-bold text-center mb-8 text-blue-900">Gallery</h2>
+          <p className="text-center text-gray-600 mb-10 max-w-2xl mx-auto">
+            Explore moments from our classes, events, and student achievements at Amiran Driving College.
+          </p>
+          <GalleryPreview images={galleryImages} />
+        </div>
+      </section>
+
       {/* Footer */}
       <footer className="bg-gray-900 text-white py-12">
         <div className="container mx-auto px-4">
@@ -353,5 +377,76 @@ function FeatureCard({ icon, title, description }: {
       <h3 className="text-xl font-bold mb-2 text-blue-900">{title}</h3>
       <p className="text-gray-600">{description}</p>
     </div>
+  );
+}
+
+function GalleryPreview({ images }: { images: string[] }) {
+  const [showModal, setShowModal] = useState(false);
+
+  // Show only first 5 images in the grid
+  const previewImages = images.slice(0, 5);
+  const remainingCount = images.length - 5;
+
+  return (
+    <>
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-6">
+        {previewImages.map((src, idx) => (
+          <div
+            key={idx}
+            className="relative group rounded-lg overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 cursor-pointer"
+            onClick={idx === 4 && remainingCount > 0 ? () => setShowModal(true) : undefined}
+          >
+            <img
+              src={src}
+              alt={`Gallery image ${idx + 1}`}
+              className="object-cover w-full h-44 sm:h-48 md:h-40 lg:h-44 xl:h-48 transform group-hover:scale-105 transition-transform duration-300"
+              loading="lazy"
+              style={{ filter: idx === 4 && remainingCount > 0 ? "brightness(0.7)" : undefined }}
+            />
+            {/* Overlay for the 5th image */}
+            {idx === 4 && remainingCount > 0 && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
+                <span className="text-white text-2xl font-bold">+{remainingCount}</span>
+              </div>
+            )}
+            {/* "View" overlay for other images */}
+            {idx !== 4 && (
+              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition duration-300 flex items-center justify-center">
+                <span className="text-white text-lg font-semibold opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  View
+                </span>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Modal for all images */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center">
+          <div className="bg-white rounded-lg shadow-2xl p-6 max-w-5xl w-full relative">
+            <button
+              className="absolute top-2 right-2 text-gray-500 hover:text-red-500 text-2xl font-bold"
+              onClick={() => setShowModal(false)}
+              aria-label="Close"
+            >
+              &times;
+            </button>
+            <h3 className="text-2xl font-bold mb-6 text-blue-900 text-center">Gallery</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+              {images.map((src, idx) => (
+                <img
+                  key={idx}
+                  src={src}
+                  alt={`Gallery image ${idx + 1}`}
+                  className="object-cover w-full h-32 sm:h-36 md:h-32 lg:h-36 xl:h-40 rounded shadow"
+                  loading="lazy"
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

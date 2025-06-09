@@ -7,8 +7,14 @@ import { setupVite, serveStatic, log } from "./vite";
 import { seedAdminUser } from "./seed";
 import { connectToMongoDB } from "../shared/db";
 import MongoStore from 'connect-mongo';
+import path from "path";
+import { fileURLToPath } from "url";
 
 const app = express();
+
+// defining __dirname and __filename for use in static file serving
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Force HTTPS in production
 app.use((req, res, next) => {
@@ -46,6 +52,9 @@ app.use(session({
     domain: process.env.NODE_ENV === 'production' ? '.amirandrivingcollege.co.ke' : undefined // <--- add this line
   }
 }));
+
+// Serve uploads folder statically
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 app.use((req, res, next) => {
   const start = Date.now();

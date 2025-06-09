@@ -68,15 +68,29 @@ export const registerStudent = async (req: Request, res: Response) => {
       subject: 'Welcome to Amiran Driving School',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 5px;">
-          <h2 style="color: #333;">Welcome to Amiran Driving School!</h2>
+          <h2 style="color: #333;">You’re In. Time to Hit the Gas! 🏁</h2>
           <p>Dear ${firstName} ${lastName},</p>
-          <p>Thank you for registering with Amiran Driving School. We are excited to help you on your journey to becoming a skilled driver.</p>
-          <p><strong>Course:</strong> ${course.name}</p>
-          <p><strong>Course Fee:</strong> KES ${course.fee.toLocaleString()}</p>
-          <p>Our team will contact you shortly to schedule your first lesson.</p>
-          <p>If you have any questions, please contact us at info@amirandrivingschool.com or call us at +254700000000.</p>
-          <p>Best regards,<br>Amiran Driving School Team</p>
+
+          <p>Welcome to <strong>Amiran Driving College</strong> — where we turn nervous beginners into confident road warriors, one gear at a time. 🚗💨</p>
+
+          <p>You just joined one of the best teams on the road, and we’re thrilled to have you in the driver’s seat.</p>
+
+          <p>Here’s a quick breakdown of your course:</p>
+          <p><strong>Course:</strong> ${course.name}<br>
+            <strong>Course Fee:</strong> KES ${course.fee.toLocaleString()}</p>
+
+          <p>So, what’s next? Get started by visiting us for your first class, exploring our tips, and getting ready to conquer the road.</p>
+
+          <p>We’ll keep sending you helpful updates, class reminders(probably😉), and maybe even a meme or two to keep things rolling.</p>
+
+          <p><strong>Need help? Got questions?</strong><br>
+          Email us at <a href="mailto:info@amirandrivingcollege.co.ke">info@amirandrivingcollege.co.ke</a> or call us at <strong>+254 708 538 416</strong>.</p>
+
+          <p>Now buckle up you legend — your driving journey starts here.</p>
+
+          <p>Best regards,<br><strong>The Amiran Driving School Team</strong> 🚦</p>
         </div>
+
       `,
     });
 

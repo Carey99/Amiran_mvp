@@ -1,5 +1,17 @@
-// This is a mock email service
-// In a production environment, this would be connected to a real email service like Nodemailer, SendGrid, etc.
+import nodemailer from 'nodemailer';
+import dotenv from 'dotenv';
+dotenv.config();
+
+// SMTP credentials
+const transporter = nodemailer.createTransport({
+    host: process.env.EMAIL_HOST, // or your host's SMTP server
+    port: Number(process.env.EMAIL_PORT), 
+    secure: process.env.EMAIL_SECURE === 'true', 
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS, // Use an app password if 2FA is enabled
+    },
+});
 
 interface EmailOptions {
     to: string;
@@ -9,13 +21,13 @@ interface EmailOptions {
 
 export const sendEmail = async (options: EmailOptions): Promise<boolean> => {
     try {
-        // Log email details for development purposes
-        console.log('📧 Email sent with the following details:');
-        console.log('To:', options.to);
-        console.log('Subject:', options.subject);
-        console.log('Content:', options.html.substring(0, 100) + '...');
-        
-        // Simulate a successful send
+        await transporter.sendMail({
+            from: '"Amiran Driving College" <info@amirandrivingcollege.co.ke>',
+            to: options.to,
+            subject: options.subject,
+            html: options.html,
+        });
+        console.log('📧 Email sent to:', options.to);
         return true;
     } catch (error) {
         console.error('Error sending email:', error);

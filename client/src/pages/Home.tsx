@@ -353,7 +353,7 @@ export default function Home() {
                 Kahawa Sukari stage 160 (Mwihoko )<br />
                 Nairobi, Kenya<br />
                 <a href="tel:+254708538416" className="hover:text-white">+254 708 538 416</a><br />
-                <a href="mailto:info@amirandrivingschool.com" className="hover:text-white">info@amirandrivingschool.com</a>
+                <a href="mailto:info@amirandrivingschool.com" className="hover:text-white">info@amirandrivingcollege.co.ke</a>
               </address>
             </div>
           </div>

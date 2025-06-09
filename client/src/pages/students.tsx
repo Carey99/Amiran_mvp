@@ -492,7 +492,11 @@ export default function Students() {
             <div className="mb-4">
               <div className="flex items-center gap-4">
                 <img
-                  src={selectedStudent.photoUrl || "/placeholder-profile.png"}
+                  src={
+                    selectedStudent.photoUrl
+                      ? `${selectedStudent.photoUrl}?t=${Date.now()}`
+                      : "/placeholder-profile.png"
+                  }
                   alt="Student"
                   className="w-24 h-24 rounded-full object-cover border"
                 />
@@ -509,6 +513,7 @@ export default function Students() {
               <div><b>Phone:</b> {selectedStudent.phone || 'N/A'}</div>
               <div><b>Course:</b> {selectedStudent.courseId?.name || 'N/A'}</div>
               <div><b>Status:</b> {selectedStudent.status || 'N/A'}</div>
+              <div><b>ID:</b> {selectedStudent.idNumber || 'N/A'}</div>
               {/* Add more fields as needed */}
             </div>
           </div>

@@ -23,6 +23,18 @@ export function PaymentDialog({ student, isOpen, onClose }: PaymentDialogProps) 
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate payment amount doesn't exceed student balance
+    const paymentAmount = parseFloat(amount);
+    if (paymentAmount > student.balance) {
+      toast({
+        title: 'Payment Error',
+        description: `Payment amount (KES ${paymentAmount.toLocaleString()}) exceeds student balance (KES ${student.balance.toLocaleString()})`,
+        variant: 'destructive',
+      });
+      return; // Stop execution here
+    }
+    
     setIsSubmitting(true);
 
     try {
@@ -73,6 +85,9 @@ export function PaymentDialog({ student, isOpen, onClose }: PaymentDialogProps) 
           <div>
             <p className="text-sm font-medium mb-2">Student</p>
             <p className="text-sm text-gray-500">{student?.firstName} {student?.lastName}</p>
+            <p className="text-sm text-red-600 font-medium mt-1">
+              Current Balance: KES {student?.balance?.toLocaleString() || '0'}
+            </p>
           </div>
           {/* Payment Amount Input */}
           <div>

@@ -7,6 +7,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Search, Download, Filter, User, BookOpen, CheckCircle } from 'lucide-react';
 import { Student } from '@/types';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
 
 export default function Students() {
   const { data: allStudents, isLoading: isLoadingAll, isError: isErrorAll } = useStudents();
@@ -16,6 +25,12 @@ export default function Students() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [uploading, setUploading] = useState(false);
+  
+  // Pagination state
+  const [currentPageAll, setCurrentPageAll] = useState(1);
+  const [currentPageOngoing, setCurrentPageOngoing] = useState(1);
+  const [currentPageFinished, setCurrentPageFinished] = useState(1);
+  const itemsPerPage = 10;
 
   // Get finished students 
   const finishedStudents = allStudents?.filter(student => 
@@ -78,6 +93,31 @@ export default function Students() {
     );
   };
 
+  // Pagination helper functions
+  const getPaginatedData = (data: Student[], currentPage: number) => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return data.slice(startIndex, endIndex);
+  };
+
+  const getTotalPages = (totalItems: number) => {
+    return Math.ceil(totalItems / itemsPerPage);
+  };
+
+  const handlePageChange = (page: number, tabType: 'all' | 'ongoing' | 'finished') => {
+    switch (tabType) {
+      case 'all':
+        setCurrentPageAll(page);
+        break;
+      case 'ongoing':
+        setCurrentPageOngoing(page);
+        break;
+      case 'finished':
+        setCurrentPageFinished(page);
+        break;
+    }
+  };
+
   // Handle photo upload
   const handlePhotoUpload = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -104,6 +144,45 @@ export default function Students() {
         setUploading(false);
       }
     }
+  };
+
+  // Pagination component
+  const renderPagination = (totalItems: number, currentPage: number, tabType: 'all' | 'ongoing' | 'finished') => {
+    const totalPages = getTotalPages(totalItems);
+    
+    if (totalPages <= 1) return null;
+
+    return (
+      <Pagination className="mt-4">
+        <PaginationContent>
+          <PaginationItem>
+            <PaginationPrevious 
+              onClick={() => currentPage > 1 && handlePageChange(currentPage - 1, tabType)}
+              className={currentPage <= 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+            />
+          </PaginationItem>
+          
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+            <PaginationItem key={page}>
+              <PaginationLink
+                onClick={() => handlePageChange(page, tabType)}
+                isActive={currentPage === page}
+                className="cursor-pointer"
+              >
+                {page}
+              </PaginationLink>
+            </PaginationItem>
+          ))}
+          
+          <PaginationItem>
+            <PaginationNext 
+              onClick={() => currentPage < totalPages && handlePageChange(currentPage + 1, tabType)}
+              className={currentPage >= totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+            />
+          </PaginationItem>
+        </PaginationContent>
+      </Pagination>
+    );
   };
 
   return (
@@ -200,7 +279,7 @@ export default function Students() {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {filterStudents(allStudents).map((student) => (
+                    {getPaginatedData(filterStudents(allStudents), currentPageAll).map((student) => (
                       <tr key={student.id}>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
@@ -253,9 +332,10 @@ export default function Students() {
               </div>
               <div className="px-5 py-3 border-t border-gray-200 flex justify-between items-center">
                 <div className="text-sm text-gray-500">
-                  Showing <span className="font-medium">{filterStudents(allStudents).length}</span> of {allStudents.length} students
+                  Showing <span className="font-medium">{getPaginatedData(filterStudents(allStudents), currentPageAll).length}</span> of {filterStudents(allStudents).length} students
                 </div>
               </div>
+              {renderPagination(filterStudents(allStudents).length, currentPageAll, 'all')}
             </>
           )}
         </TabsContent>
@@ -305,7 +385,7 @@ export default function Students() {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {filterStudents(ongoingStudents).map((student) => {
+                    {getPaginatedData(filterStudents(ongoingStudents), currentPageOngoing).map((student) => {
                       const completedLessons = student.lessons && student.lessons.filter(lesson => lesson.completed).length || 0;
                       const totalLessons = student.courseId && student.courseId.numberOfLessons || 0;
                       const progressPercentage = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
@@ -368,9 +448,10 @@ export default function Students() {
               </div>
               <div className="px-5 py-3 border-t border-gray-200 flex justify-between items-center">
                 <div className="text-sm text-gray-500">
-                  Showing <span className="font-medium">{filterStudents(ongoingStudents).length}</span> of {ongoingStudents.length} ongoing students
+                  Showing <span className="font-medium">{getPaginatedData(filterStudents(ongoingStudents), currentPageOngoing).length}</span> of {filterStudents(ongoingStudents).length} ongoing students
                 </div>
               </div>
+              {renderPagination(filterStudents(ongoingStudents).length, currentPageOngoing, 'ongoing')}
             </>
           )}
         </TabsContent>
@@ -420,7 +501,7 @@ export default function Students() {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {filterStudents(finishedStudents).map((student) => {
+                    {getPaginatedData(filterStudents(finishedStudents), currentPageFinished).map((student) => {
                       // Get last completed lesson date
                       const completedLessons = student.lessons?.filter(lesson => lesson.completed) || [];
                       const lastLesson = completedLessons.length > 0 ? 
@@ -470,9 +551,10 @@ export default function Students() {
               </div>
               <div className="px-5 py-3 border-t border-gray-200 flex justify-between items-center">
                 <div className="text-sm text-gray-500">
-                  Showing <span className="font-medium">{filterStudents(finishedStudents).length}</span> of {finishedStudents.length} finished students
+                  Showing <span className="font-medium">{getPaginatedData(filterStudents(finishedStudents), currentPageFinished).length}</span> of {filterStudents(finishedStudents).length} finished students
                 </div>
               </div>
+              {renderPagination(filterStudents(finishedStudents).length, currentPageFinished, 'finished')}
             </>
           )}
         </TabsContent>

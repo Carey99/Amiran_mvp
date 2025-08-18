@@ -424,7 +424,19 @@ export class MongoStorage implements IStorage {
   }> {
     try {
       const totalStudents = await Student.countDocuments();
-      const activeStudents = await Student.countDocuments({ status: 'active' });
+      
+      // Get all students to calculate finished students using the same logic as frontend
+      const allStudents = await Student.find().populate('courseId');
+      const finishedStudents = allStudents.filter(student => 
+        student.status === 'completed' || 
+        (student.lessons && student.courseId && 
+         student.lessons.filter((lesson: any) => lesson.completed).length === (student.courseId as any).numberOfLessons)
+      );
+      const finishedStudentsCount = finishedStudents.length;
+      
+      // Active students = Total students - Finished students
+      const activeStudents = totalStudents - finishedStudentsCount;
+      
       const instructors = await Instructor.countDocuments({ active: true });
       
       // Calculate total revenue from payments
@@ -462,7 +474,19 @@ export class MongoStorage implements IStorage {
   }> {
     try {
       const totalStudents = await Student.countDocuments({ branch });
-      const activeStudents = await Student.countDocuments({ branch, status: 'active' });
+      
+      // Get all students in this branch to calculate finished students using the same logic as frontend
+      const allStudents = await Student.find({ branch }).populate('courseId');
+      const finishedStudents = allStudents.filter(student => 
+        student.status === 'completed' || 
+        (student.lessons && student.courseId && 
+         student.lessons.filter((lesson: any) => lesson.completed).length === (student.courseId as any).numberOfLessons)
+      );
+      const finishedStudentsCount = finishedStudents.length;
+      
+      // Active students = Total students - Finished students
+      const activeStudents = totalStudents - finishedStudentsCount;
+      
       const instructors = await Instructor.countDocuments({ branch, active: true });
 
       // Calculate total revenue from payments for students in this branch (current month)

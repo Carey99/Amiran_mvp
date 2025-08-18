@@ -10,6 +10,14 @@ import {
   TableRow 
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
 
 interface StudentTableProps {
   students: Student[];
@@ -18,6 +26,8 @@ interface StudentTableProps {
 
 export function StudentTable({ students, isLoading }: StudentTableProps) {
   const [filter, setFilter] = useState<'all' | 'paid' | 'partial' | 'unpaid'>('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20; // Updated to 20 items per page
 
   const filteredStudents = students.filter(student => {
     const completedLessons = student.lessons?.filter(lesson => lesson.completed)?.length || 0;
@@ -31,6 +41,22 @@ export function StudentTable({ students, isLoading }: StudentTableProps) {
     if (filter === 'all') return true;
     return paymentStatus === filter;
   });
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredStudents.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedStudents = filteredStudents.slice(startIndex, endIndex);
+
+  // Reset to page 1 when filter changes
+  const handleFilterChange = (newFilter: 'all' | 'paid' | 'partial' | 'unpaid') => {
+    setFilter(newFilter);
+    setCurrentPage(1);
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
 
   if (isLoading) {
     return (
@@ -50,25 +76,25 @@ export function StudentTable({ students, isLoading }: StudentTableProps) {
       <div className="flex gap-2 mb-4">
         <button
           className={`px-3 py-1 rounded ${filter === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-100'}`}
-          onClick={() => setFilter('all')}
+          onClick={() => handleFilterChange('all')}
         >
           All
         </button>
         <button
           className={`px-3 py-1 rounded ${filter === 'paid' ? 'bg-green-600 text-white' : 'bg-gray-100'}`}
-          onClick={() => setFilter('paid')}
+          onClick={() => handleFilterChange('paid')}
         >
           Paid
         </button>
         <button
           className={`px-3 py-1 rounded ${filter === 'partial' ? 'bg-amber-600 text-white' : 'bg-gray-100'}`}
-          onClick={() => setFilter('partial')}
+          onClick={() => handleFilterChange('partial')}
         >
           Partial
         </button>
         <button
           className={`px-3 py-1 rounded ${filter === 'unpaid' ? 'bg-red-600 text-white' : 'bg-gray-100'}`}
-          onClick={() => setFilter('unpaid')}
+          onClick={() => handleFilterChange('unpaid')}
         >
           Unpaid
         </button>
@@ -90,7 +116,7 @@ export function StudentTable({ students, isLoading }: StudentTableProps) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredStudents.map((student, index) => {
+              {paginatedStudents.map((student, index) => {
                 const completedLessons = student.lessons?.filter(lesson => lesson.completed)?.length || 0;
                 const totalLessons = student.courseId?.numberOfLessons || 0;
                 const progress = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
@@ -140,6 +166,49 @@ export function StudentTable({ students, isLoading }: StudentTableProps) {
               })}
             </TableBody>
           </Table>
+        </div>
+      )}
+
+      {/* Pagination Info and Controls */}
+      {filteredStudents.length > 0 && (
+        <div className="flex justify-between items-center mt-4">
+          <div className="text-sm text-gray-500">
+            Showing <span className="font-medium">{startIndex + 1}</span> to{' '}
+            <span className="font-medium">{Math.min(endIndex, filteredStudents.length)}</span> of{' '}
+            <span className="font-medium">{filteredStudents.length}</span> students
+          </div>
+          
+          {totalPages > 1 && (
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious 
+                    onClick={() => currentPage > 1 && handlePageChange(currentPage - 1)}
+                    className={currentPage <= 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                  />
+                </PaginationItem>
+                
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  <PaginationItem key={page}>
+                    <PaginationLink
+                      onClick={() => handlePageChange(page)}
+                      isActive={currentPage === page}
+                      className="cursor-pointer"
+                    >
+                      {page}
+                    </PaginationLink>
+                  </PaginationItem>
+                ))}
+                
+                <PaginationItem>
+                  <PaginationNext 
+                    onClick={() => currentPage < totalPages && handlePageChange(currentPage + 1)}
+                    className={currentPage >= totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          )}
         </div>
       )}
     </div>

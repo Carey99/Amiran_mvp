@@ -6,6 +6,7 @@ import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/dashboard";
 import Students from "@/pages/students";
 import StudentLessons from "@/pages/student-lessons";
+import StudentCertificate from "@/pages/student-certificate";
 import Instructors from "@/pages/instructors";
 import Payments from "@/pages/payments";
 import Courses from "@/pages/courses";
@@ -112,6 +113,10 @@ function Router() {
       </Route>
       <Route path="/reports">
         {() => <ProtectedRouteWrapper component={Reports} />}
+      </Route>
+      
+      <Route path="/admin/students/:id/certificate">
+        {() => <ProtectedRouteWrapper component={StudentCertificate} />}
       </Route>
       
       {/* 404 Route */}

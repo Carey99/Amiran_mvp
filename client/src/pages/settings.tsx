@@ -8,7 +8,7 @@ export default function Settings() {
     schoolName: "Amiran Driving School",
     contactEmail: "",
     contactPhone: "+254 708 538 416",
-    schoolAddress: "Kahawa Sukari stage 160 (Mwihoko)",
+  schoolAddress: "Mwihoko - stage 160 (Mwihoko)",
   });
   const [isSaving, setIsSaving] = useState(false);
 

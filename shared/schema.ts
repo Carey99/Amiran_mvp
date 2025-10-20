@@ -15,7 +15,7 @@ export * from './models/activity'; // Commented out because 'activity.ts' is not
 const objectIdSchema = z.union([z.string(), z.instanceof(Types.ObjectId)]);
 
 // Define allowed branches as a constant
-export const branchOptions = ['Mwihoko', 'Kahawa Sukari', 'Kasarani'] as const;
+export const branchOptions = ['Mwihoko - stage 160', 'Mwihoko - discovery'] as const;
 
 // Create Zod validation schemas for input data
 

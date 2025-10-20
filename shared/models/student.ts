@@ -101,7 +101,7 @@ const studentSchema = new Schema<IStudent>(
     branch: { 
       type: String,
       required: true,
-      enum: ['Mwihoko', 'Kahawa Sukari', 'Kasarani']
+      enum: ['Mwihoko - stage 160', 'Mwihoko - discovery']
     },
     photoUrl: { 
       type: String, 

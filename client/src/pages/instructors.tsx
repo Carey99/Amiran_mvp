@@ -347,9 +347,8 @@ export default function Instructors() {
                       <SelectValue placeholder="Select a branch" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Mwihoko">Mwihoko</SelectItem>
-                      <SelectItem value="Kahawa Sukari">Kahawa Sukari</SelectItem>
-                      <SelectItem value="Kasarani">Kasarani</SelectItem>
+                      <SelectItem value="Mwihoko - stage 160">Mwihoko - stage 160</SelectItem>
+                      <SelectItem value="Mwihoko - discovery">Mwihoko - discovery</SelectItem>
                     </SelectContent>
                   </Select>
                   {formData.branch === '' && (

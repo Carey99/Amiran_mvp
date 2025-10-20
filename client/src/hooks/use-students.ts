@@ -72,7 +72,7 @@ const transformStudent = (data: any): Student => {
     balance: data.balance || 0,
     totalPaid: data.totalPaid || 0,
     courseFee: data.courseFee || 0,
-    branch: data.branch || 'Mwihoko',
+  branch: data.branch || 'Mwihoko - stage 160',
     createdAt: data.createdAt || '',
     photoUrl: data.photoUrl || ""
   };

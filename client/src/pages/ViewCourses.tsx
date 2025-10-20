@@ -100,7 +100,7 @@ export default function ViewCourses() {
               <li>Flexible scheduling — open 7 days a week</li>
               <li>Personalized lessons for every student</li>
               <li>State-of-the-art learning materials</li>
-              <li>Branches in Kahawa Sukari, Kahawa Wendani, Githurai 45, Kasarani</li>
+              <li>Branches in Mwihoko - discovery, Kahawa Wendani, Githurai 45, Kasarani</li>
             </ul>
           </div>
           <div className="md:w-1/2 flex flex-col items-center">
@@ -181,9 +181,10 @@ export default function ViewCourses() {
       <section className="py-12 bg-gray-50">
         <div className="container mx-auto px-4 flex flex-col md:flex-row gap-10 items-center">
           <div className="md:w-1/2">
-            <h2 className="text-2xl font-bold text-blue-900 mb-4">Our Branches</h2>
+              <h2 className="text-2xl font-bold text-blue-900 mb-4">Our Branches</h2>
             <ul className="text-gray-700 space-y-2">
-              <li>Kahawa Sukari stage 160 (Mwihoko)</li>
+              <li>Mwihoko - stage 160</li>
+              <li>Mwihoko - discovery</li>
               <li>Kahawa Wendani</li>
               <li>Githurai 45</li>
               <li>Kasarani</li>
@@ -264,7 +265,7 @@ export default function ViewCourses() {
             <div>
               <h4 className="text-lg font-bold mb-4">Contact Us</h4>
               <address className="text-gray-400 not-italic">
-                Kahawa Sukari stage 160 (Mwihoko )<br />
+                Mwihoko - stage 160 (Mwihoko )<br />
                 Nairobi, Kenya<br />
                 <a href="tel:+254708538416" className="hover:text-white">+254 708 538 416</a><br />
                 <a href="mailto:info@amirandrivingschool.com" className="hover:text-white">info@amirandrivingschool.com</a>

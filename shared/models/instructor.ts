@@ -52,7 +52,7 @@ const instructorSchema = new Schema<IInstructor>(
     branch: {
       type: String,
       required: true,
-      enum: ['Mwihoko', 'Kahawa Sukari', 'Kasarani']
+      enum: ['Mwihoko - stage 160', 'Mwihoko - discovery']
     },
     active: { 
       type: Boolean, 

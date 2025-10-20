@@ -24,7 +24,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Loader2, Menu, X } from "lucide-react";
 
-const branchOptions = ["Mwihoko", "Kahawa Sukari", "Kasarani"] as const;
+const branchOptions = ["Mwihoko - stage 160", "Mwihoko - discovery"] as const;
 
 // Form schema with validation rules
 const applicationSchema = z.object({
@@ -349,9 +349,11 @@ export default function Apply() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="Mwihoko">Mwihoko</SelectItem>
-                            <SelectItem value="Kahawa Sukari">Kahawa Sukari</SelectItem>
-                            <SelectItem value="Kasarani">Kasarani</SelectItem>
+                            {branchOptions.map((b) => (
+                              <SelectItem key={b} value={b}>
+                                {b}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                         <FormMessage />
